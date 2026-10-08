@@ -6,6 +6,7 @@ import { MAX_PAGE } from './pagination'
 export const MAX_QUERY_LENGTH = 100
 export const MAX_AUTHOR_LENGTH = 80
 export const MAX_AUTHORS = 10
+export const MAX_SAVED = 50
 const MAX_PROVIDER_ID_LENGTH = 32
 
 export const queryTextSchema = z.string().check(z.trim(), z.maxLength(MAX_QUERY_LENGTH))
@@ -44,3 +45,18 @@ export const preferencesSchema = z.object({
 })
 
 export type Preferences = z.infer<typeof preferencesSchema>
+
+// A saved article is read back from localStorage, which anyone can edit, so it is checked like
+// any other outside data: links must be http(s), images https, and nothing may be huge.
+export const articleSchema = z.object({
+  id: z.string().check(z.minLength(1), z.maxLength(600)),
+  provider: providerIdSchema,
+  title: z.string().check(z.maxLength(500)),
+  summary: z.string().check(z.maxLength(3000)),
+  url: z.httpUrl(),
+  imageUrl: z.optional(z.url({ protocol: /^https$/ })),
+  publisher: z.string().check(z.maxLength(200)),
+  section: z.optional(z.string().check(z.maxLength(200))),
+  author: z.optional(z.string().check(z.maxLength(600))),
+  publishedAt: z.string().check(z.maxLength(40)),
+})

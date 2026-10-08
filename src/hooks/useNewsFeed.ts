@@ -28,7 +28,8 @@ export const useNewsFeed = () => {
     initialPageParam: FIRST_PAGE,
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     select: selectArticles,
-    enabled: !needsPreferences,
+    // the saved tab reads from this device, it never asks the server
+    enabled: !needsPreferences && view !== 'saved',
     placeholderData: keepPreviousData,
   })
 

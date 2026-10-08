@@ -51,7 +51,7 @@ interface StateProps {
   action?: ReactNode
 }
 
-const CenteredState = ({ icon, title, description, action }: StateProps) => {
+export const CenteredState = ({ icon, title, description, action }: StateProps) => {
   return (
     <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed px-6 py-16 text-center">
       <div className="text-muted-foreground [&_svg]:size-8">{icon}</div>

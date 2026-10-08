@@ -2,7 +2,7 @@ import type { Category, ProviderId, Sort } from '@shared/news'
 
 export type { Preferences } from '@shared/schemas'
 
-export const VIEWS = ['latest', 'feed'] as const
+export const VIEWS = ['latest', 'feed', 'saved'] as const
 export type FeedView = (typeof VIEWS)[number]
 
 export interface ArticleFilters {

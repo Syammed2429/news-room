@@ -6,6 +6,7 @@ import type { Article } from '@shared/news'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 import { usePreferencesStore } from './store/preferences'
+import { useSavedStore } from './store/saved'
 import { useSearchStore } from './store/search'
 
 const article = (n: number, title: string, author: string): Article => ({
@@ -68,6 +69,7 @@ beforeEach(() => {
     to: undefined,
   })
   usePreferencesStore.setState({ providerIds: [], categories: [], authors: [] })
+  useSavedStore.setState({ articles: [] })
 })
 
 afterEach(() => {
@@ -301,6 +303,57 @@ describe('App', () => {
         .filter(([url]) => url.endsWith('/search'))
         .map(([, init]) => JSON.parse(String(init?.body)) as NewsSearchBody)
       expect(bodies.at(-1)?.request.queries[0]?.sort).toBe('relevance')
+    })
+  })
+
+  describe('saved articles', () => {
+    const saveButtons = () => screen.findAllByRole('button', { name: /^save for later/i })
+
+    it('saves an article, lists it under Saved, and removes it again', async () => {
+      const user = userEvent.setup()
+      renderApp()
+      const [first] = await saveButtons()
+      if (!first) throw new Error('no save button')
+      expect(first).toHaveAttribute('aria-pressed', 'false')
+
+      await user.click(first)
+      expect(useSavedStore.getState().articles).toHaveLength(1)
+      expect(screen.getByRole('tab', { name: /saved\s*1/i })).toBeInTheDocument()
+
+      await user.click(screen.getByRole('tab', { name: /saved/i }))
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Saved articles')
+      expect(await screen.findAllByRole('article')).toHaveLength(1)
+      expect(screen.getByText(/1 saved article$/i)).toBeInTheDocument()
+
+      await user.click(screen.getByRole('button', { name: /^remove from saved/i }))
+      expect(await screen.findByText(/nothing saved yet/i)).toBeInTheDocument()
+    })
+
+    it('never asks the server while on the Saved tab', async () => {
+      const user = userEvent.setup()
+      renderApp()
+      await screen.findAllByRole('article')
+      fakeBackend.mockClear()
+
+      await user.click(screen.getByRole('tab', { name: /saved/i }))
+      await screen.findByText(/nothing saved yet/i)
+
+      expect(fakeBackend.mock.calls.filter(([url]) => url.endsWith('/search'))).toHaveLength(0)
+    })
+
+    it('offers a way back from the empty page', async () => {
+      const user = userEvent.setup()
+      renderApp()
+      await user.click(screen.getByRole('tab', { name: /saved/i }))
+      await user.click(await screen.findByRole('button', { name: /browse the latest news/i }))
+      expect(screen.getByRole('tab', { name: /latest/i })).toHaveAttribute('aria-selected', 'true')
+    })
+
+    it('hides the search box, which only applies to news', async () => {
+      const user = userEvent.setup()
+      renderApp()
+      await user.click(screen.getByRole('tab', { name: /saved/i }))
+      expect(screen.queryByRole('textbox', { name: /search articles/i })).not.toBeInTheDocument()
     })
   })
 

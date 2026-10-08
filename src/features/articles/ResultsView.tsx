@@ -1,13 +1,12 @@
-import { motion } from 'motion/react'
 import { PreferencesSheet } from '@/features/preferences/PreferencesSheet'
 import { useNewsFeed } from '@/hooks/useNewsFeed'
-import { cn } from '@/lib/utils'
 import { usePreferencesStore } from '@/store/preferences'
 import { useSearchStore } from '@/store/search'
 import { MAX_PAGE } from '@shared/pagination'
 import { SortToggle } from '@/features/search/SortToggle'
-import { ArticleCard } from './ArticleCard'
+import { ArticleGrid } from './ArticleGrid'
 import { ArticleSkeletons } from './ArticleSkeletons'
+import { SavedArticles } from './SavedArticles'
 import { EmptyState, EndNote, ErrorState, FailureBanner, FeedEmptyState, PersonalizePrompt } from './Notices'
 import { ScrollSentinel } from './ScrollSentinel'
 
@@ -19,6 +18,7 @@ export const ResultsView = () => {
   const followed = usePreferencesStore((s) => s.authors)
   const feed = useNewsFeed()
 
+  if (view === 'saved') return <SavedArticles />
   if (feed.needsPreferences) return <PersonalizePrompt action={<PreferencesSheet />} />
   if (feed.isLoading) return <ArticleSkeletons />
   if (feed.isError && feed.articles.length === 0) {
@@ -49,22 +49,7 @@ export const ResultsView = () => {
         </p>
         {query && <SortToggle />}
       </div>
-      <motion.ul
-        className={cn(
-          'grid gap-5 transition-opacity sm:grid-cols-2 xl:grid-cols-3',
-          feed.isRefreshing && 'opacity-50',
-        )}
-      >
-        {feed.articles.map((article, index) => {
-          // only feature a top story on the plain timeline
-          const isLead = index === 0 && view === 'latest' && !query && Boolean(article.imageUrl)
-          return (
-            <li key={article.id} className={cn(isLead && 'sm:col-span-2 xl:col-span-3')}>
-              <ArticleCard article={article} index={index} variant={isLead ? 'lead' : 'default'} />
-            </li>
-          )
-        })}
-      </motion.ul>
+      <ArticleGrid articles={feed.articles} dimmed={feed.isRefreshing} topStory={view === 'latest' && !query} />
       {feed.isFetchingMore && <ArticleSkeletons count={3} />}
       {feed.hasMore ? (
         <ScrollSentinel onReach={() => feed.loadMore()} disabled={feed.isFetchingMore} />

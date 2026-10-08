@@ -10,12 +10,20 @@ import { FilterPanel } from '@/features/filters/FilterPanel'
 import { MobileFilters } from '@/features/filters/MobileFilters'
 import { SearchBar } from '@/features/search/SearchBar'
 import { useSources } from '@/hooks/useSources'
+import { useSavedStore } from '@/store/saved'
 import { useSearchStore, type FeedView } from '@/store/search'
+
+const HEADINGS: Record<FeedView, string> = {
+  latest: 'Latest news',
+  feed: 'Your news feed',
+  saved: 'Saved articles',
+}
 
 const App = () => {
   const view = useSearchStore((s) => s.view)
   const setView = useSearchStore((s) => s.setView)
   const { isDemo } = useSources()
+  const savedCount = useSavedStore((s) => s.articles.length)
 
   return (
     <div className="min-h-dvh bg-background text-foreground">
@@ -34,13 +42,13 @@ const App = () => {
           </div>
         </aside>
         <div id="content" tabIndex={-1} className="flex min-w-0 flex-col gap-4 outline-none">
-          <h1 className="sr-only">{view === 'feed' ? 'Your news feed' : 'Latest news'}</h1>
+          <h1 className="sr-only">{HEADINGS[view]}</h1>
           {isDemo && (
             <Banner>
               Showing sample articles. Add API keys on the server (see the README) to load live news.
             </Banner>
           )}
-          <SearchBar />
+          {view !== 'saved' && <SearchBar />}
           {/* Stays in view while scrolling so the reader can switch topic at any depth. */}
           <div className="sticky top-14 z-20 -mx-4 flex flex-col gap-3 bg-background/90 px-4 py-3 backdrop-blur lg:mx-0 lg:px-0">
             <div className="flex items-center justify-between gap-3">
@@ -48,9 +56,13 @@ const App = () => {
                 <TabsList>
                   <TabsTrigger value="latest">Latest</TabsTrigger>
                   <TabsTrigger value="feed">For you</TabsTrigger>
+                  <TabsTrigger value="saved">
+                    Saved
+                    {savedCount > 0 && <span className="ml-1 text-xs tabular-nums opacity-70">{savedCount}</span>}
+                  </TabsTrigger>
                 </TabsList>
               </Tabs>
-              <MobileFilters />
+              {view !== 'saved' && <MobileFilters />}
             </div>
             {view === 'latest' && <CategoryChips />}
             <LoadingBar />

@@ -10,6 +10,10 @@ export const FilterPanel = () => {
   const { view, providerIds, from, to } = useSearchStore()
   const { toggleProvider, setFrom, setTo, resetFilters } = useSearchStore.getState()
   const feedMode = view === 'feed'
+
+  if (view === 'saved') {
+    return <p className="rounded-lg bg-muted p-3 text-sm text-muted-foreground">Saved articles are kept on this device.</p>
+  }
   const hasActiveFilters = Boolean(providerIds.length || from || to)
 
   return (

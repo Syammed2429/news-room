@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 import { splitAuthors } from '@/lib/text'
 import { usePreferencesStore } from '@/store/preferences'
 import { PublisherBadge } from './PublisherBadge'
+import { SaveButton } from './SaveButton'
 import { authorNameSchema, MAX_AUTHORS } from '@shared/schemas'
 import type { Article } from '@shared/news'
 
@@ -128,9 +129,12 @@ export const ArticleCard = ({ article, index, variant = 'default' }: Props) => {
         )}
         <div className="mt-auto flex flex-col gap-1 pt-3">
           {author && <AuthorFollowButtons byline={author} />}
-          <time dateTime={publishedAt} className="text-xs text-muted-foreground">
-            {timeAgo(publishedAt)}
-          </time>
+          <div className="flex items-center justify-between">
+            <time dateTime={publishedAt} className="text-xs text-muted-foreground">
+              {timeAgo(publishedAt)}
+            </time>
+            <SaveButton article={article} />
+          </div>
         </div>
       </div>
     </motion.article>
