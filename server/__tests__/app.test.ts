@@ -2,7 +2,11 @@
 import type { SourcesResponse } from '@shared/api'
 import type { AggregatedPage } from '@shared/pagination'
 import { FIRST_PAGE } from '@shared/pagination'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
+import { gunzipSync } from 'node:zlib'
+import { afterAll, afterEach, describe, expect, it, vi } from 'vitest'
 import { createApp } from '../app'
 import { createNewsAggregator } from '../news/aggregator'
 import { cacheProviders, createDemoProviders, createProviders } from '../news/providers'
@@ -191,5 +195,91 @@ describe('secret handling', () => {
     const text = await response.text()
     expect(text).not.toContain(SECRET)
     expect(JSON.parse(text)).toEqual({ error: 'Internal server error' })
+  })
+})
+
+describe('content type', () => {
+  it.each([
+    ['text/plain', 415],
+    ['application/x-www-form-urlencoded', 415],
+    ['application/json', 200],
+    ['application/json; charset=utf-8', 200],
+  ])('%s -> %i', async (contentType, status) => {
+    const response = await build().request('/api/news/search', {
+      method: 'POST',
+      headers: { 'Content-Type': contentType },
+      body: JSON.stringify(valid),
+    })
+    expect(response.status).toBe(status)
+  })
+
+  it('refuses a POST with no content type at all', async () => {
+    const response = await build().request('/api/news/search', { method: 'POST', body: JSON.stringify(valid) })
+    expect(response.status).toBe(415)
+  })
+})
+
+describe('compression', () => {
+  it('gzips API responses when the client accepts it, and the body is still valid JSON', async () => {
+    const response = await search(build(), valid, {
+      headers: { 'Content-Type': 'application/json', 'Accept-Encoding': 'gzip' },
+    })
+    expect(response.headers.get('content-encoding')).toBe('gzip')
+    const raw = Buffer.from(await response.arrayBuffer())
+    expect(JSON.parse(gunzipSync(raw).toString())).toHaveProperty('articles')
+  })
+
+  it('sends plain responses to clients that do not ask for compression', async () => {
+    const response = await search(build(), valid)
+    expect(response.headers.get('content-encoding')).toBeNull()
+  })
+})
+
+describe('serving the built app', () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'newsroom-dist-'))
+  mkdirSync(path.join(dir, 'assets'))
+  const filler = 'x'.repeat(4000)
+  writeFileSync(path.join(dir, 'index.html'), `<!doctype html><title>Newsroom</title><div id="root"></div><!--${filler}-->`)
+  writeFileSync(path.join(dir, 'assets', 'app-abc123.js'), `console.log("${filler}")`)
+
+  const withStatic = () =>
+    createApp({
+      aggregator: createNewsAggregator(createDemoProviders()),
+      demo: true,
+      trustProxy: false,
+      rateLimit: { windowMs: 60_000, max: 1000 },
+      // serveStatic resolves this against the working directory
+      staticDir: path.relative(process.cwd(), dir),
+    })
+
+  afterAll(() => rmSync(dir, { recursive: true, force: true }))
+
+  it('serves the page, never caches it, and compresses it', async () => {
+    const response = await withStatic().request('/', { headers: { 'Accept-Encoding': 'gzip' } })
+    expect(response.status).toBe(200)
+    expect(response.headers.get('cache-control')).toBe('no-cache')
+    expect(response.headers.get('content-encoding')).toBe('gzip')
+  })
+
+  it('caches fingerprinted assets for a year', async () => {
+    const response = await withStatic().request('/assets/app-abc123.js')
+    expect(response.status).toBe(200)
+    expect(response.headers.get('cache-control')).toBe('public, max-age=31536000, immutable')
+  })
+
+  it('gives unknown paths the app, but unknown API paths a JSON 404', async () => {
+    const app = withStatic()
+    const page = await app.request('/some/client/route')
+    expect(page.status).toBe(200)
+    expect(await page.text()).toContain('id="root"')
+
+    const api = await app.request('/api/nope')
+    expect(api.status).toBe(404)
+    expect(await api.json()).toEqual({ error: 'Not found' })
+  })
+
+  it('does not expose files outside the build folder', async () => {
+    const response = await withStatic().request('/..%2fpackage.json')
+    expect(await response.text()).not.toContain('"name": "news-aggregator"')
   })
 })

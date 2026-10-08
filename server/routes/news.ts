@@ -30,6 +30,10 @@ export const newsRoutes = ({ aggregator, demo }: Deps) => {
       onError: (c) => c.json({ error: 'Request body too large' }, 413),
     }),
     async (c) => {
+      // a plain-text or form POST is what a cross-site form would send, so refuse it
+      if (!c.req.header('content-type')?.toLowerCase().startsWith('application/json')) {
+        return c.json({ error: 'Content-Type must be application/json' }, 415)
+      }
       const payload: unknown = await c.req.json().catch(() => undefined)
       const parsed = searchBodySchema.safeParse(payload)
       // don't say why it failed, that only helps someone probing the API

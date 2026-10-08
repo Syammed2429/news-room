@@ -1,5 +1,6 @@
 import { serveStatic } from '@hono/node-server/serve-static'
 import { Hono } from 'hono'
+import { compress } from 'hono/compress'
 import { secureHeaders } from 'hono/secure-headers'
 import { rateLimit } from './http/rateLimit'
 import { requireSameOrigin } from './http/sameOrigin'
@@ -39,6 +40,9 @@ export const createApp = ({ aggregator, demo, trustProxy, rateLimit: limits, sta
       permissionsPolicy: { camera: [], microphone: [], geolocation: [], payment: [] },
     }),
   )
+
+  // gzip everything over 1 KB: the JS bundle is ~700 kB raw and about a third of that gzipped
+  app.use(compress())
 
   app.get('/healthz', (c) => c.text('ok'))
 
