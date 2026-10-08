@@ -8,6 +8,7 @@ import { ActiveFilters } from '@/features/filters/ActiveFilters'
 import { CategoryChips } from '@/features/filters/CategoryChips'
 import { FilterPanel } from '@/features/filters/FilterPanel'
 import { MobileFilters } from '@/features/filters/MobileFilters'
+import { RecentSearches } from '@/features/search/RecentSearches'
 import { SearchBar } from '@/features/search/SearchBar'
 import { useSources } from '@/hooks/useSources'
 import { useSavedStore } from '@/store/saved'
@@ -49,6 +50,7 @@ const App = () => {
             </Banner>
           )}
           {view !== 'saved' && <SearchBar />}
+          {view !== 'saved' && <RecentSearches />}
           {/* Stays in view while scrolling so the reader can switch topic at any depth. */}
           <div className="sticky top-14 z-20 -mx-4 flex flex-col gap-3 bg-background/90 px-4 py-3 backdrop-blur lg:mx-0 lg:px-0">
             <div className="flex items-center justify-between gap-3">

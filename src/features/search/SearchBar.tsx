@@ -3,6 +3,7 @@ import { useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useDebouncedCallback } from '@/hooks/useDebouncedCallback'
+import { useRecentStore } from '@/store/recent'
 import { useSearchStore } from '@/store/search'
 import { MAX_QUERY_LENGTH, queryTextSchema } from '@shared/schemas'
 
@@ -23,6 +24,12 @@ export const SearchBar = () => {
     setQuery(parsed.success ? parsed.data : '')
   }
 
+  // only finished searches are kept, not every half-typed word the debounce happened to catch
+  const remember = (value: string) => {
+    const parsed = queryTextSchema.safeParse(value)
+    if (parsed.success && parsed.data.length >= MIN_LENGTH) useRecentStore.getState().add(parsed.data)
+  }
+
   const debounced = useDebouncedCallback(() => {
     // read the box when the timer fires, so text cleared in the meantime isn't searched
     const value = useSearchStore.getState().draft
@@ -38,6 +45,7 @@ export const SearchBar = () => {
         event.preventDefault()
         debounced.cancel()
         apply(draft) // Enter doesn't wait
+        remember(draft)
       }}
     >
       <div className="relative">
@@ -52,6 +60,8 @@ export const SearchBar = () => {
           enterKeyHint="search"
           maxLength={MAX_QUERY_LENGTH}
           value={draft}
+          // leaving the box means the reader is done typing, which is when a search is worth keeping
+          onBlur={() => remember(draft)}
           onChange={(event) => {
             setDraft(event.target.value)
             debounced.run()

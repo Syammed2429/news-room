@@ -6,6 +6,7 @@ import type { Article } from '@shared/news'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 import { usePreferencesStore } from './store/preferences'
+import { useRecentStore } from './store/recent'
 import { useSavedStore } from './store/saved'
 import { useSearchStore } from './store/search'
 
@@ -70,6 +71,7 @@ beforeEach(() => {
   })
   usePreferencesStore.setState({ providerIds: [], categories: [], authors: [] })
   useSavedStore.setState({ articles: [] })
+  useRecentStore.setState({ searches: [] })
 })
 
 afterEach(() => {
@@ -303,6 +305,57 @@ describe('App', () => {
         .filter(([url]) => url.endsWith('/search'))
         .map(([, init]) => JSON.parse(String(init?.body)) as NewsSearchBody)
       expect(bodies.at(-1)?.request.queries[0]?.sort).toBe('relevance')
+    })
+  })
+
+  describe('recent searches', () => {
+    const box = () => screen.getByRole('textbox', { name: /search articles/i })
+
+    it('remembers a search when the reader presses Enter', async () => {
+      const user = userEvent.setup()
+      renderApp()
+      await screen.findAllByRole('article')
+
+      await user.type(box(), 'telescope{enter}')
+
+      expect(useRecentStore.getState().searches).toEqual(['telescope'])
+    })
+
+    it('remembers a search when the reader leaves the box, but not half-typed words', async () => {
+      const user = userEvent.setup()
+      renderApp()
+      await screen.findAllByRole('article')
+
+      await user.type(box(), 'markets')
+      expect(useRecentStore.getState().searches).toEqual([]) // still typing
+
+      await user.tab()
+      expect(useRecentStore.getState().searches).toEqual(['markets'])
+    })
+
+    it('shows them only while the box is empty, and a click runs the search', async () => {
+      const user = userEvent.setup()
+      useRecentStore.setState({ searches: ['telescope', 'markets'] })
+      renderApp()
+      await screen.findAllByRole('article')
+
+      const group = screen.getByRole('group', { name: /recent searches/i })
+      await user.click(within(group).getByRole('button', { name: 'telescope' }))
+
+      expect(box()).toHaveValue('telescope')
+      expect(useSearchStore.getState().query).toBe('telescope')
+      expect(screen.queryByRole('group', { name: /recent searches/i })).not.toBeInTheDocument()
+    })
+
+    it('can be cleared', async () => {
+      const user = userEvent.setup()
+      useRecentStore.setState({ searches: ['telescope'] })
+      renderApp()
+
+      await user.click(within(screen.getByRole('group', { name: /recent searches/i })).getByRole('button', { name: /clear/i }))
+
+      expect(useRecentStore.getState().searches).toEqual([])
+      expect(screen.queryByRole('group', { name: /recent searches/i })).not.toBeInTheDocument()
     })
   })
 
