@@ -1,0 +1,5 @@
+# the same checks CI would run
+pnpm typecheck
+pnpm lint
+pnpm test
+pnpm build

@@ -1,0 +1,11 @@
+# never let an env file into a commit
+blocked=$(git diff --cached --name-only --diff-filter=ACM | grep -E '(^|/)\.env(\..*)?$' | grep -v '\.env\.example$' || true)
+if [ -n "$blocked" ]; then
+  echo "✖ Refusing to commit environment files:"
+  echo "$blocked"
+  echo "  Keep secrets in .env (git-ignored) and document names in .env.example."
+  exit 1
+fi
+
+pnpm exec lint-staged
+pnpm typecheck
