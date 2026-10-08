@@ -24,6 +24,10 @@ export const CATEGORY_LABELS: Record<Category, string> = {
 
 export type ProviderId = string
 
+export const SORTS = ['newest', 'relevance'] as const
+
+export type Sort = (typeof SORTS)[number]
+
 // one article, whichever source it came from
 export interface Article {
   id: string
@@ -48,6 +52,8 @@ export interface SearchParams {
   categories: Category[]
   // only articles by one of these authors
   authors: string[]
+  // newest first (the default), or each source's own idea of the best match
+  sort?: Sort
   // yyyy-MM-dd, inclusive
   from?: string
   // yyyy-MM-dd, inclusive

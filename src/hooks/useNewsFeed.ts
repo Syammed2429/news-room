@@ -11,14 +11,14 @@ const selectArticles = (data: { pages: AggregatedPage[] }) => ({
 })
 
 export const useNewsFeed = () => {
-  const { view, query, category, providerIds, from, to } = useSearchStore()
+  const { view, query, category, providerIds, sort, from, to } = useSearchStore()
   const { providerIds: preferredProviders, categories, authors } = usePreferencesStore()
 
   const preferences = { providerIds: preferredProviders, categories, authors }
   const request =
     view === 'feed'
-      ? buildFeedRequest(preferences, { query, from, to })
-      : buildLatestRequest({ query, category, providerIds, from, to })
+      ? buildFeedRequest(preferences, { query, sort, from, to })
+      : buildLatestRequest({ query, category, providerIds, sort, from, to })
 
   const needsPreferences = view === 'feed' && !hasPreferences(preferences)
 

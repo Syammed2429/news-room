@@ -281,3 +281,42 @@ describe('untrusted upstream data', () => {
     expect((fetchMock.mock.calls[0] as unknown[])[1]).toMatchObject({ redirect: 'error' })
   })
 })
+
+describe('sort order', () => {
+  const guardianPayload = { response: { currentPage: 1, pages: 1, results: [] } }
+  const nytPayload = { response: { docs: [], metadata: { hits: 0 } } }
+  const newsApiPayload = { totalResults: 0, articles: [] }
+
+  it('guardian: newest by default, even when searching, relevance only when asked', async () => {
+    const { lastUrl } = stubFetch(guardianPayload)
+    const provider = createGuardianProvider('k')
+
+    await provider.search({ ...base, query: 'ai' }, 1)
+    expect(lastUrl().searchParams.get('order-by')).toBe('newest')
+
+    await provider.search({ ...base, query: 'ai', sort: 'relevance' }, 1)
+    expect(lastUrl().searchParams.get('order-by')).toBe('relevance')
+  })
+
+  it('nyt: same rule', async () => {
+    const { lastUrl } = stubFetch(nytPayload)
+    const provider = createNytProvider('k')
+
+    await provider.search({ ...base, query: 'ai' }, 1)
+    expect(lastUrl().searchParams.get('sort')).toBe('newest')
+
+    await provider.search({ ...base, query: 'ai', sort: 'relevance' }, 1)
+    expect(lastUrl().searchParams.get('sort')).toBe('relevance')
+  })
+
+  it('newsapi: sortBy follows the same rule on the everything endpoint', async () => {
+    const { lastUrl } = stubFetch(newsApiPayload)
+    const provider = createNewsApiProvider('k')
+
+    await provider.search({ ...base, query: 'ai', from: '2025-01-01' }, 1)
+    expect(lastUrl().searchParams.get('sortBy')).toBe('publishedAt')
+
+    await provider.search({ ...base, query: 'ai', from: '2025-01-01', sort: 'relevance' }, 1)
+    expect(lastUrl().searchParams.get('sortBy')).toBe('relevancy')
+  })
+})

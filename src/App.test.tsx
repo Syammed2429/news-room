@@ -284,6 +284,26 @@ describe('App', () => {
     expect(useSearchStore.getState()).toMatchObject({ providerIds: [], from: undefined })
   })
 
+  it('offers sorting only while searching, and sends the choice to the server', async () => {
+    const user = userEvent.setup()
+    renderApp()
+    await screen.findAllByRole('article')
+    expect(screen.queryByRole('group', { name: /sort results/i })).not.toBeInTheDocument()
+
+    await user.type(screen.getByRole('textbox', { name: /search articles/i }), 'telescope{enter}')
+    const group = await screen.findByRole('group', { name: /sort results/i })
+    expect(within(group).getByRole('button', { name: 'Newest' })).toHaveAttribute('aria-pressed', 'true')
+
+    await user.click(within(group).getByRole('button', { name: 'Most relevant' }))
+
+    await waitFor(() => {
+      const bodies = fakeBackend.mock.calls
+        .filter(([url]) => url.endsWith('/search'))
+        .map(([, init]) => JSON.parse(String(init?.body)) as NewsSearchBody)
+      expect(bodies.at(-1)?.request.queries[0]?.sort).toBe('relevance')
+    })
+  })
+
   it('has one top-level heading that follows the tab', async () => {
     const user = userEvent.setup()
     renderApp()

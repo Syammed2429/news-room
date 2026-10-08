@@ -119,7 +119,7 @@ export const createNewsApiProvider = (apiKey: string): NewsProvider => {
         country: everything ? undefined : 'us',
         from: params.from,
         to: params.to,
-        sortBy: everything ? (params.query ? 'relevancy' : 'publishedAt') : undefined,
+        sortBy: everything ? (params.sort === 'relevance' ? 'relevancy' : 'publishedAt') : undefined,
         language: everything ? 'en' : undefined,
         pageSize: size,
         page,

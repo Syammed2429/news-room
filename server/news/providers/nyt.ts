@@ -88,7 +88,7 @@ export const createNytProvider = (apiKey: string): NewsProvider => ({
         q: buildQuery(params),
         begin_date: compactDate(params.from),
         end_date: compactDate(params.to),
-        sort: params.query ? 'relevance' : 'newest',
+        sort: params.sort === 'relevance' ? 'relevance' : 'newest',
         page: pageIndex,
       }),
       { signal },

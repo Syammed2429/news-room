@@ -71,6 +71,43 @@ describe('createNewsAggregator', () => {
     expect(result.articles.map((a) => a.id)).toEqual(['theirs-old', 'newest', 'older'])
   })
 
+  describe('relevance order', () => {
+    const two = [
+      provider('a', async () =>
+        page([
+          article('a1', { publishedAt: '2025-01-01T00:00:00Z' }),
+          article('a2', { publishedAt: '2025-01-02T00:00:00Z' }),
+          article('a3', { publishedAt: '2025-01-03T00:00:00Z' }),
+        ]),
+      ),
+      provider('b', async () =>
+        page([article('b1', { publishedAt: '2025-02-01T00:00:00Z' }), article('b2', { publishedAt: '2025-02-02T00:00:00Z' })]),
+      ),
+    ]
+    const withSort = (sort: SearchParams['sort']) => request({ queries: [{ ...params, ...(sort && { sort }) }] })
+
+    it('keeps each source in its own order and takes turns between them', async () => {
+      const result = await createNewsAggregator(two).search(withSort('relevance'), FIRST_PAGE)
+      expect(result.articles.map((a) => a.id)).toEqual(['a1', 'b1', 'a2', 'b2', 'a3'])
+    })
+
+    it('still sorts by date when relevance was not asked for', async () => {
+      const result = await createNewsAggregator(two).search(withSort(undefined), FIRST_PAGE)
+      expect(result.articles.map((a) => a.id)).toEqual(['b2', 'b1', 'a3', 'a2', 'a1'])
+    })
+
+    it('puts followed authors first in either mode', async () => {
+      const aggregator = createNewsAggregator([
+        provider('a', async () => page([article('x'), article('mine', { author: 'Jane Doe' }), article('y')])),
+      ])
+      const result = await aggregator.search(
+        request({ queries: [{ ...params, sort: 'relevance' }, { ...params, authors: ['Jane Doe'] }] }),
+        FIRST_PAGE,
+      )
+      expect(result.articles[0]?.id).toBe('mine')
+    })
+  })
+
   it('hides internal error details behind a generic message', async () => {
     const aggregator = createNewsAggregator([
       provider('bad', async () => {

@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { toggleItem } from '@/lib/collections'
 import type { ArticleFilters } from '@/types/filters'
-import type { Category, ProviderId } from '@shared/news'
+import type { Category, ProviderId, Sort } from '@shared/news'
 
 export type FeedView = 'latest' | 'feed'
 
@@ -14,6 +14,7 @@ interface SearchState extends ArticleFilters {
   setQuery: (query: string) => void
   clearSearch: () => void
   setCategory: (category: Category | null) => void
+  setSort: (sort: Sort) => void
   toggleProvider: (id: ProviderId) => void
   setFrom: (from: string | undefined) => void
   setTo: (to: string | undefined) => void
@@ -26,6 +27,7 @@ const initialFilters: ArticleFilters = {
   query: '',
   category: null,
   providerIds: [],
+  sort: 'newest',
   from: undefined,
   to: undefined,
 }
@@ -39,6 +41,7 @@ export const useSearchStore = create<SearchState>()((set) => ({
   setQuery: (query) => set({ query }),
   clearSearch: () => set({ draft: '', query: '' }),
   setCategory: (category) => set({ category }),
+  setSort: (sort) => set({ sort }),
   toggleProvider: (id) => set((s) => ({ providerIds: toggleItem(s.providerIds, id) })),
   setFrom: (from) => set({ from }),
   setTo: (to) => set({ to }),

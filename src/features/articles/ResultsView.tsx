@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 import { usePreferencesStore } from '@/store/preferences'
 import { useSearchStore } from '@/store/search'
 import { MAX_PAGE } from '@shared/pagination'
+import { SortToggle } from '@/features/search/SortToggle'
 import { ArticleCard } from './ArticleCard'
 import { ArticleSkeletons } from './ArticleSkeletons'
 import { EmptyState, EndNote, ErrorState, FailureBanner, FeedEmptyState, PersonalizePrompt } from './Notices'
@@ -42,9 +43,12 @@ export const ResultsView = () => {
   return (
     <div className="flex flex-col gap-4">
       <FailureBanner failures={feed.failures} />
-      <p aria-live="polite" className="text-sm text-muted-foreground">
-        {feed.articles.length} {feed.articles.length === 1 ? 'article' : 'articles'}
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p aria-live="polite" className="text-sm text-muted-foreground">
+          {feed.articles.length} {feed.articles.length === 1 ? 'article' : 'articles'}
+        </p>
+        {query && <SortToggle />}
+      </div>
       <motion.ul
         className={cn(
           'grid gap-5 transition-opacity sm:grid-cols-2 xl:grid-cols-3',

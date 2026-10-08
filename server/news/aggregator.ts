@@ -13,6 +13,14 @@ const isWrittenBy = (article: Article, authors: string[]) =>
 const rank = (article: Article, followed: string[]) =>
   followed.length > 0 && matchesAuthor(article.author, followed) ? 0 : 1
 
+// Sources don't share a relevance score, so there's no honest way to rank across them.
+// Keep each source's own order and take one article from each in turn.
+const takeTurns = (lists: Article[][]): Article[] => {
+  const longest = Math.max(0, ...lists.map((list) => list.length))
+  return Array.from({ length: longest }, (_, i) => lists.flatMap((list) => list[i] ?? []))
+    .flat()
+}
+
 // two queries can find the same article, keep the first (best ranked) one
 const uniqueByUrl = (articles: Article[]): Article[] => {
   const seen = new Set<string>()
@@ -49,7 +57,8 @@ export const createNewsAggregator = (providers: readonly NewsProvider[]): NewsAg
     )
     signal?.throwIfAborted()
 
-    const articles: Article[] = []
+    const byJob: Article[][] = []
+    const relevance = queries.some((query) => query.sort === 'relevance')
     const failures = new Map<ProviderId, ProviderFailure>()
     const nowExhausted = [...exhausted]
     let hasMore = false
@@ -66,13 +75,17 @@ export const createNewsAggregator = (providers: readonly NewsProvider[]): NewsAg
         })
         continue
       }
-      articles.push(...result.value.articles.filter((a) => isWrittenBy(a, job.params.authors)))
+      byJob.push(result.value.articles.filter((a) => isWrittenBy(a, job.params.authors)))
       if (result.value.hasMore) hasMore = true
       else nowExhausted.push(job.key)
     }
 
+    // followed authors first, then either each source's own order or newest first
+    const merged = relevance ? takeTurns(byJob) : byJob.flat().sort(byNewest)
+    merged.sort((a, b) => rank(a, followed) - rank(b, followed))
+
     return {
-      articles: uniqueByUrl(articles.sort((a, b) => rank(a, followed) - rank(b, followed) || byNewest(a, b))),
+      articles: uniqueByUrl(merged),
       failures: [...failures.values()],
       ...(hasMore && page < MAX_PAGE && { nextCursor: { page: page + 1, exhausted: nowExhausted } }),
     }

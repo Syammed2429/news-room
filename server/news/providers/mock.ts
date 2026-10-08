@@ -59,6 +59,12 @@ const matches = (article: Sample, params: SearchParams): boolean => {
   )
 }
 
+// title matches count double
+const score = (article: Sample, query: string): number => {
+  const hits = (text: string) => text.toLowerCase().split(query.toLowerCase()).length - 1
+  return hits(article.title) * 2 + hits(article.summary)
+}
+
 export const createMockProvider = (id: string, name: string, seed: number): NewsProvider => {
   const catalogue = generate(id, name, seed)
   return {
@@ -67,6 +73,9 @@ export const createMockProvider = (id: string, name: string, seed: number): News
     search: async (params, page): Promise<ProviderPage> => {
       await new Promise((resolve) => setTimeout(resolve, 350)) // fake a little latency
       const matching = catalogue.filter((article) => matches(article, params))
+      if (params.sort === 'relevance' && params.query) {
+        matching.sort((a, b) => score(b, params.query) - score(a, params.query))
+      }
       const start = (page - 1) * PAGE_SIZE
       return {
         articles: matching.slice(start, start + PAGE_SIZE),

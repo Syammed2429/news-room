@@ -77,7 +77,7 @@ export const createGuardianProvider = (apiKey: string): NewsProvider => ({
         section: sections.join('|'),
         'from-date': params.from,
         'to-date': params.to,
-        'order-by': params.query ? 'relevance' : 'newest',
+        'order-by': params.sort === 'relevance' ? 'relevance' : 'newest',
         'show-fields': 'thumbnail,trailText,byline',
         'show-tags': 'contributor',
         'page-size': PAGE_SIZE,

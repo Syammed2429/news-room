@@ -40,6 +40,24 @@ describe('preferencesSchema', () => {
   })
 })
 
+describe('sort in a search', () => {
+  const withSort = (sort: unknown) => ({
+    request: { queries: [{ query: 'x', categories: [], authors: [], sort }], providerIds: [] },
+    cursor: { page: 1, exhausted: [] },
+  })
+
+  it('accepts the two known orders and no sort at all', () => {
+    expect(searchBodySchema.safeParse(withSort('newest')).success).toBe(true)
+    expect(searchBodySchema.safeParse(withSort('relevance')).success).toBe(true)
+    expect(searchBodySchema.safeParse(withSort(undefined)).success).toBe(true)
+  })
+
+  it('rejects anything else', () => {
+    expect(searchBodySchema.safeParse(withSort('random')).success).toBe(false)
+    expect(searchBodySchema.safeParse(withSort(1)).success).toBe(false)
+  })
+})
+
 describe('searchBodySchema', () => {
   const body = {
     request: { queries: [{ query: '', categories: [], authors: [] }], providerIds: [] },
