@@ -1,9 +1,10 @@
 import { create } from 'zustand'
 import { toggleItem } from '@/lib/collections'
-import type { ArticleFilters } from '@/types/filters'
+import { DEFAULT_URL_STATE, parseUrlState } from '@/lib/urlState'
+import type { ArticleFilters, FeedView } from '@/types/filters'
 import type { Category, ProviderId, Sort } from '@shared/news'
 
-export type FeedView = 'latest' | 'feed'
+export type { FeedView } from '@/types/filters'
 
 interface SearchState extends ArticleFilters {
   view: FeedView
@@ -24,18 +25,20 @@ interface SearchState extends ArticleFilters {
 }
 
 const initialFilters: ArticleFilters = {
-  query: '',
-  category: null,
-  providerIds: [],
-  sort: 'newest',
-  from: undefined,
-  to: undefined,
+  query: DEFAULT_URL_STATE.query,
+  category: DEFAULT_URL_STATE.category,
+  providerIds: DEFAULT_URL_STATE.providerIds,
+  sort: DEFAULT_URL_STATE.sort,
 }
+
+// a shared link or a refresh brings the page back to where it was
+const fromUrl = () => parseUrlState(window.location.search)
 
 export const useSearchStore = create<SearchState>()((set) => ({
   ...initialFilters,
-  view: 'latest',
-  draft: '',
+  ...fromUrl(),
+  view: fromUrl().view ?? DEFAULT_URL_STATE.view,
+  draft: fromUrl().query ?? '',
   setView: (view) => set({ view }),
   setDraft: (draft) => set({ draft }),
   setQuery: (query) => set({ query }),
@@ -47,5 +50,5 @@ export const useSearchStore = create<SearchState>()((set) => ({
   setTo: (to) => set({ to }),
   resetFilters: () =>
     set({ category: null, providerIds: [], from: undefined, to: undefined }),
-  resetAll: () => set({ ...initialFilters, draft: '' }),
+  resetAll: () => set({ ...initialFilters, from: undefined, to: undefined, draft: '' }),
 }))
