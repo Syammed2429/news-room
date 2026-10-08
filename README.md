@@ -116,5 +116,5 @@ Husky runs these:
 - NewsAPI's free plan only returns the first 100 results and delays them.
 - Each page is sorted newest first, but the list as a whole isn't one global sort.
 - The rate limiter is in memory, so it would need a shared store with more than one server instance.
-- The Dockerfile hasn't been built yet because Docker wasn't installed on the development machine.
-  The runtime was checked by running the production bundle on its own in an empty folder.
+- The image was built and run with Docker Desktop 4.94 on an Apple Silicon Mac (arm64). It is about
+  236 MB, and the app works in it under the strict CSP. It hasn't been tried on x86 or in CI.
