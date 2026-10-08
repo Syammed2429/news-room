@@ -1,4 +1,5 @@
 import { SlidersHorizontalIcon } from 'lucide-react'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Sheet,
@@ -19,9 +20,10 @@ export const PreferencesSheet = () => {
   const { providerIds, categories, authors } = usePreferencesStore()
   const { toggleProvider, toggleCategory, toggleAuthor, clear } = usePreferencesStore.getState()
   const total = providerIds.length + categories.length + authors.length
+  const [confirming, setConfirming] = useState(false)
 
   return (
-    <Sheet>
+    <Sheet onOpenChange={(open) => !open && setConfirming(false)}>
       <SheetTrigger render={<Button variant="outline" />}>
         <SlidersHorizontalIcon />
         Personalize
@@ -48,9 +50,27 @@ export const PreferencesSheet = () => {
           </FilterSection>
         </div>
         <SheetFooter>
-          <Button variant="ghost" onClick={clear} disabled={total === 0}>
-            Reset preferences
-          </Button>
+          {confirming ? (
+            <div className="flex gap-2">
+              <Button
+                variant="destructive"
+                className="flex-1"
+                onClick={() => {
+                  clear()
+                  setConfirming(false)
+                }}
+              >
+                Yes, reset everything
+              </Button>
+              <Button variant="outline" onClick={() => setConfirming(false)}>
+                Cancel
+              </Button>
+            </div>
+          ) : (
+            <Button variant="ghost" onClick={() => setConfirming(true)} disabled={total === 0}>
+              Reset preferences
+            </Button>
+          )}
         </SheetFooter>
       </SheetContent>
     </Sheet>

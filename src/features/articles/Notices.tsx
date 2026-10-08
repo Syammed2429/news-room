@@ -62,6 +62,16 @@ const CenteredState = ({ icon, title, description, action }: StateProps) => {
   )
 }
 
+export const EndNote = ({ capped, failed }: { capped: boolean; failed: boolean }) => (
+  <p className="py-4 text-center text-sm text-muted-foreground">
+    {failed
+      ? "Some sources couldn't be reached, so this may not be everything."
+      : capped
+        ? "That's as far back as we load. Search or filter to find more."
+        : "You're all caught up."}
+  </p>
+)
+
 export const FeedEmptyState = ({ authors, onShowLatest }: { authors: string[]; onShowLatest: () => void }) => (
   <CenteredState
     icon={<NewspaperIcon aria-hidden />}

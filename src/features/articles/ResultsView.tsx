@@ -4,9 +4,10 @@ import { useNewsFeed } from '@/hooks/useNewsFeed'
 import { cn } from '@/lib/utils'
 import { usePreferencesStore } from '@/store/preferences'
 import { useSearchStore } from '@/store/search'
+import { MAX_PAGE } from '@shared/pagination'
 import { ArticleCard } from './ArticleCard'
 import { ArticleSkeletons } from './ArticleSkeletons'
-import { EmptyState, ErrorState, FailureBanner, FeedEmptyState, PersonalizePrompt } from './Notices'
+import { EmptyState, EndNote, ErrorState, FailureBanner, FeedEmptyState, PersonalizePrompt } from './Notices'
 import { ScrollSentinel } from './ScrollSentinel'
 
 export const ResultsView = () => {
@@ -64,7 +65,7 @@ export const ResultsView = () => {
       {feed.hasMore ? (
         <ScrollSentinel onReach={() => feed.loadMore()} disabled={feed.isFetchingMore} />
       ) : (
-        <p className="py-4 text-center text-sm text-muted-foreground">You're all caught up.</p>
+        <EndNote capped={feed.pageCount >= MAX_PAGE} failed={feed.failures.length > 0} />
       )}
     </div>
   )

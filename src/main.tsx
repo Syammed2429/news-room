@@ -3,6 +3,7 @@ import { MotionConfig } from 'motion/react'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import './index.css'
 
 const queryClient = new QueryClient({
@@ -21,10 +22,12 @@ if (!container) throw new Error('Missing #root element in index.html')
 
 createRoot(container).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <MotionConfig reducedMotion="user">
-        <App />
-      </MotionConfig>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <MotionConfig reducedMotion="user">
+          <App />
+        </MotionConfig>
+      </QueryClientProvider>
+    </ErrorBoundary>
   </StrictMode>,
 )

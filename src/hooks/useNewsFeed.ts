@@ -5,7 +5,10 @@ import { buildFeedRequest, buildLatestRequest, hasPreferences } from '@/services
 import { usePreferencesStore } from '@/store/preferences'
 import { useSearchStore } from '@/store/search'
 
-const selectArticles = (data: { pages: AggregatedPage[] }) => mergePages(data.pages)
+const selectArticles = (data: { pages: AggregatedPage[] }) => ({
+  ...mergePages(data.pages),
+  pageCount: data.pages.length,
+})
 
 export const useNewsFeed = () => {
   const { view, query, category, providerIds, from, to } = useSearchStore()
@@ -32,6 +35,7 @@ export const useNewsFeed = () => {
   return {
     articles: result.data?.articles ?? [],
     failures: result.data?.failures ?? [],
+    pageCount: result.data?.pageCount ?? 0,
     needsPreferences,
     isLoading: result.isLoading,
     isRefreshing: result.isPlaceholderData,
