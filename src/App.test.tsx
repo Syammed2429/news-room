@@ -211,11 +211,21 @@ describe('App', () => {
 
     await user.click(screen.getByRole('tab', { name: /for you/i }))
 
-    await waitFor(() => {
-      const cards = screen.getAllByRole('article')
-      expect(cards.length).toBeGreaterThan(0)
-      cards.forEach((card) => expect(card).toHaveTextContent(author))
-    })
+    // the base feed plus the followed author's articles
+    await waitFor(() => expect(screen.getAllByRole('article')).toHaveLength(3))
+    expect(screen.getAllByRole('article').some((card) => card.textContent?.includes(author))).toBe(true)
+    expect(screen.queryByText(/no recent articles by/i)).not.toBeInTheDocument()
+  })
+
+  it('explains it when none of the followed authors have articles, and still shows news', async () => {
+    const user = userEvent.setup()
+    usePreferencesStore.setState({ authors: ['Nobody Known'] })
+    renderApp()
+
+    await user.click(screen.getByRole('tab', { name: /for you/i }))
+
+    expect(await screen.findByText(/no recent articles by nobody known/i)).toBeInTheDocument()
+    expect(await screen.findAllByRole('article')).toHaveLength(3)
   })
 
   it('shows a retryable error when the API is unreachable', async () => {

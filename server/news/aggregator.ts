@@ -1,13 +1,28 @@
 import type { NewsRequest } from '@shared/api'
+import { matchesAuthor } from '@shared/authors'
 import type { Article, NewsProvider, ProviderFailure, ProviderId } from '@shared/news'
 import { MAX_PAGE, type AggregatedPage, type PageCursor } from '@shared/pagination'
 import { UpstreamError } from '../http/fetchJson'
-import { includesIgnoreCase } from './text'
 
 const byNewest = (a: Article, b: Article) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt)
 
 const isWrittenBy = (article: Article, authors: string[]) =>
-  authors.length === 0 || authors.some((author) => includesIgnoreCase(article.author, author))
+  authors.length === 0 || matchesAuthor(article.author, authors)
+
+// articles by followed authors come first, then newest first
+const rank = (article: Article, followed: string[]) =>
+  followed.length > 0 && matchesAuthor(article.author, followed) ? 0 : 1
+
+// two queries can find the same article, keep the first (best ranked) one
+const uniqueByUrl = (articles: Article[]): Article[] => {
+  const seen = new Set<string>()
+  return articles.filter((article) => {
+    const key = article.url || article.id
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
 
 export interface NewsAggregator {
   readonly providers: readonly NewsProvider[]
@@ -19,6 +34,9 @@ export const createNewsAggregator = (providers: readonly NewsProvider[]): NewsAg
   search: async ({ queries, providerIds }, { page, exhausted }, signal) => {
     const active =
       providerIds.length > 0 ? providers.filter((p) => providerIds.includes(p.id)) : providers
+
+    // authors the reader follows, in any of the queries
+    const followed = queries.flatMap((query) => query.authors)
 
     const jobs = active.flatMap((provider) =>
       queries.map((params, index) => ({ provider, params, key: `${provider.id}:${index}` })),
@@ -54,7 +72,7 @@ export const createNewsAggregator = (providers: readonly NewsProvider[]): NewsAg
     }
 
     return {
-      articles: articles.sort(byNewest),
+      articles: uniqueByUrl(articles.sort((a, b) => rank(a, followed) - rank(b, followed) || byNewest(a, b))),
       failures: [...failures.values()],
       ...(hasMore && page < MAX_PAGE && { nextCursor: { page: page + 1, exhausted: nowExhausted } }),
     }

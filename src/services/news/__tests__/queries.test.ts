@@ -30,7 +30,7 @@ describe('buildFeedRequest', () => {
     expect(request.providerIds).toEqual(['nyt'])
   })
 
-  it('adds a separate author query so the feed is a union, not an intersection', () => {
+  it('adds a separate author query next to the category query', () => {
     const request = buildFeedRequest(
       { providerIds: [], categories: ['science'], authors: ['Jane Doe'] },
       search,
@@ -44,9 +44,11 @@ describe('buildFeedRequest', () => {
 describe('buildFeedRequest with partial preferences', () => {
   const search = { query: '', from: undefined, to: undefined }
 
-  it('does not run an unfiltered category query when only authors are chosen', () => {
+  it('keeps the base feed when only authors are chosen, so it is never empty', () => {
     const request = buildFeedRequest({ providerIds: [], categories: [], authors: ['Jane Doe'] }, search)
-    expect(request.queries).toEqual([expect.objectContaining({ categories: [], authors: ['Jane Doe'] })])
+    expect(request.queries).toHaveLength(2)
+    expect(request.queries[0]).toMatchObject({ categories: [], authors: [] })
+    expect(request.queries[1]).toMatchObject({ categories: [], authors: ['Jane Doe'] })
   })
 
   it('still returns the latest from preferred sources when only sources are chosen', () => {

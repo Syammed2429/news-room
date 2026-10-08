@@ -12,6 +12,8 @@ the browser and the news APIs so the API keys never reach the client.
   letters, because NYT only allows about 5 requests a minute). Filter by category, source and date.
 - A "For you" tab built from the sources, categories and authors you pick under Personalize. You can
   also follow an author straight from an article card. Choices are saved in `localStorage`.
+  Articles by authors you follow are pinned to the top; the rest is the latest from your sources
+  and categories.
 - Infinite scroll with skeleton cards while the next page loads.
 - Works on phones: filters move into a slide-over sheet.
 - If one source fails (bad key, rate limit) the others still load and a notice says which one failed.
@@ -106,6 +108,9 @@ Husky runs these:
 
 - NYT's `fq` filter returned nothing when tested, so categories and authors go into the search
   text. Results are related but not as exact as the Guardian's sections.
+- None of the APIs can search by author properly: NewsAPI can't at all, and NYT only matches
+  bylines through its text search. So followed authors are a boost, not a filter. They show up
+  first when they have recent articles, and a notice says so when they don't.
 - NewsAPI's free plan only returns the first 100 results and delays them.
 - Each page is sorted newest first, but the list as a whole isn't one global sort.
 - The rate limiter is in memory, so it would need a shared store with more than one server instance.

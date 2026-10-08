@@ -49,6 +49,28 @@ describe('createNewsAggregator', () => {
     expect(result.failures).toEqual([{ provider: 'bad', message: 'boom' }])
   })
 
+  it('puts articles by followed authors first, then newest first', async () => {
+    const aggregator = createNewsAggregator([
+      provider('a', async () =>
+        page([
+          article('newest', { publishedAt: '2025-03-01T00:00:00Z', author: 'Someone Else' }),
+          article('theirs-old', { publishedAt: '2025-01-01T00:00:00Z', author: 'Jane Doe' }),
+          article('older', { publishedAt: '2025-02-01T00:00:00Z', author: 'Another One' }),
+        ]),
+      ),
+    ])
+    const result = await aggregator.search(
+      request({
+        queries: [
+          { query: '', categories: [], authors: [] },
+          { query: '', categories: [], authors: ['Jane Doe'] },
+        ],
+      }),
+      FIRST_PAGE,
+    )
+    expect(result.articles.map((a) => a.id)).toEqual(['theirs-old', 'newest', 'older'])
+  })
+
   it('hides internal error details behind a generic message', async () => {
     const aggregator = createNewsAggregator([
       provider('bad', async () => {
