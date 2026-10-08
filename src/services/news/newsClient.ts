@@ -2,7 +2,7 @@ import type { NewsRequest, NewsSearchBody, SourcesResponse } from '@shared/api'
 import type { AggregatedPage, PageCursor } from '@shared/pagination'
 
 // the message is written for the reader
-export class ApiError extends Error {
+class ApiError extends Error {
   readonly status: number
 
   constructor(status: number, message: string) {

@@ -1,6 +1,6 @@
 import type { ApiKeys } from './news/providers'
 
-export interface AppConfig {
+interface AppConfig {
   port: number
   // only turn on behind a proxy you run, X-Forwarded-For can be faked
   trustProxy: boolean
