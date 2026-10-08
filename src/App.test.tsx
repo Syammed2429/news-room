@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { NewsSearchBody, SourcesResponse } from '@shared/api'
 import type { Article } from '@shared/news'
@@ -79,6 +79,64 @@ describe('App', () => {
     await waitFor(() => {
       const titles = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)
       expect(titles).toEqual(['Telescope captures earliest galaxy'])
+    })
+  })
+
+  describe('search as you type', () => {
+    const searchedFor = () =>
+      fakeBackend.mock.calls
+        .filter(([url]) => url.endsWith('/search'))
+        .map(([, init]) => (JSON.parse(String(init?.body)) as NewsSearchBody).request.queries[0]?.query)
+
+    beforeEach(() => vi.useFakeTimers({ shouldAdvanceTime: true }))
+    afterEach(() => vi.useRealTimers())
+
+    it('waits for a pause in typing, then sends one request', async () => {
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+      renderApp()
+      await screen.findAllByRole('article')
+
+      await user.type(screen.getByRole('textbox', { name: /search articles/i }), 'telescope')
+      expect(searchedFor()).not.toContain('telescope')
+
+      await act(() => vi.advanceTimersByTimeAsync(500))
+      await waitFor(() => expect(searchedFor()).toContain('telescope'))
+      // only the empty first load and the final word, nothing per keystroke
+      expect(searchedFor()).toEqual(['', 'telescope'])
+    })
+
+    it('does not search for a single letter', async () => {
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+      renderApp()
+      await screen.findAllByRole('article')
+
+      await user.type(screen.getByRole('textbox', { name: /search articles/i }), 't')
+      await act(() => vi.advanceTimersByTimeAsync(1000))
+
+      expect(searchedFor()).toEqual([''])
+    })
+
+    it('searches right away on Enter', async () => {
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+      renderApp()
+      await screen.findAllByRole('article')
+
+      await user.type(screen.getByRole('textbox', { name: /search articles/i }), 'markets{enter}')
+
+      await waitFor(() => expect(searchedFor()).toContain('markets'))
+    })
+
+    it('clears the search with the X button', async () => {
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+      renderApp()
+      await screen.findAllByRole('article')
+
+      const box = screen.getByRole('textbox', { name: /search articles/i })
+      await user.type(box, 'markets{enter}')
+      await user.click(screen.getByRole('button', { name: /clear search/i }))
+
+      expect(box).toHaveValue('')
+      expect(useSearchStore.getState().query).toBe('')
     })
   })
 

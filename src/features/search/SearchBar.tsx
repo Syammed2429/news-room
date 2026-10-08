@@ -1,26 +1,43 @@
 import { SearchIcon, XIcon } from 'lucide-react'
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { useDebouncedCallback } from '@/hooks/useDebouncedCallback'
 import { useSearchStore } from '@/store/search'
 import { MAX_QUERY_LENGTH, queryTextSchema } from '@shared/schemas'
+
+// Every new query goes to three APIs and NYT only allows about 5 requests a minute,
+// so wait for a pause in typing and skip single letters.
+const DEBOUNCE_MS = 500
+const MIN_LENGTH = 2
 
 export const SearchBar = () => {
   const query = useSearchStore((s) => s.query)
   const setQuery = useSearchStore((s) => s.setQuery)
+  const [draft, setDraft] = useState(query)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  const apply = (value: string) => {
+    const parsed = queryTextSchema.safeParse(value)
+    setQuery(parsed.success ? parsed.data : '')
+  }
+
+  const debounced = useDebouncedCallback((value: string) => {
+    const length = value.trim().length
+    // empty clears the search, a lone letter is ignored
+    if (length === 0 || length >= MIN_LENGTH) apply(value)
+  }, DEBOUNCE_MS)
 
   return (
     <form
       role="search"
-      className="flex gap-2"
       onSubmit={(event) => {
         event.preventDefault()
-        const parsed = queryTextSchema.safeParse(new FormData(event.currentTarget).get('q'))
-        setQuery(parsed.success ? parsed.data : '')
+        debounced.cancel()
+        apply(draft) // Enter doesn't wait
       }}
     >
-      <div className="relative flex-1">
+      <div className="relative">
         <SearchIcon
           aria-hidden
           className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
@@ -31,12 +48,16 @@ export const SearchBar = () => {
           type="text"
           enterKeyHint="search"
           maxLength={MAX_QUERY_LENGTH}
-          defaultValue={query}
+          value={draft}
+          onChange={(event) => {
+            setDraft(event.target.value)
+            debounced.run(event.target.value)
+          }}
           placeholder="Search articles"
           aria-label="Search articles"
           className="h-10 pr-9 pl-9"
         />
-        {query && (
+        {draft && (
           <Button
             type="button"
             variant="ghost"
@@ -44,8 +65,9 @@ export const SearchBar = () => {
             aria-label="Clear search"
             className="absolute top-1/2 right-1.5 -translate-y-1/2"
             onClick={() => {
+              debounced.cancel()
+              setDraft('')
               setQuery('')
-              if (inputRef.current) inputRef.current.value = ''
               inputRef.current?.focus()
             }}
           >
@@ -53,9 +75,6 @@ export const SearchBar = () => {
           </Button>
         )}
       </div>
-      <Button type="submit" size="lg" className="h-10 px-4">
-        Search
-      </Button>
     </form>
   )
 }

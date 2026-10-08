@@ -8,7 +8,8 @@ the browser and the news APIs so the API keys never reach the client.
 
 ## What it does
 
-- Search by keyword, and filter by category, source and date range.
+- Search by keyword as you type (it waits half a second after you stop, and ignores single
+  letters, because NYT only allows about 5 requests a minute). Filter by category, source and date.
 - A "For you" tab built from the sources, categories and authors you pick under Personalize. You can
   also follow an author straight from an article card. Choices are saved in `localStorage`.
 - Infinite scroll with skeleton cards while the next page loads.
