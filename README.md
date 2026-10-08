@@ -9,13 +9,21 @@ the browser and the news APIs so the API keys never reach the client.
 ## What it does
 
 - Search by keyword as you type (it waits half a second after you stop, and ignores single
-  letters, because NYT only allows about 5 requests a minute). Filter by category, source and date.
+  letters, because NYT only allows about 5 requests a minute). Filter by category, source and date,
+  and sort a search by newest or by relevance. Recent searches show up under the box.
+- The search and filters live in the URL, so a link restores the same view, a refresh keeps it, and
+  the Back button undoes a filter. For example `/?q=climate&category=science&sources=guardian`.
 - A "For you" tab built from the sources, categories and authors you pick under Personalize. You can
   also follow an author straight from an article card. Choices are saved in `localStorage`.
   If you only follow authors, the feed shows only their articles. With categories as well, it
   shows both, with the authors' articles first.
-- Infinite scroll with skeleton cards while the next page loads.
-- Works on phones: filters move into a slide-over sheet.
+- A "Saved" tab: bookmark any article to keep it on this device (the latest 50).
+- Infinite scroll with skeleton cards while the next page loads. The next page starts loading on
+  the first scroll, and a thin bar shows while anything is loading.
+- A "new articles" button appears when something newer has been published (checked every 5 minutes
+  while the tab is open).
+- Works on phones: filters move into a slide-over sheet. Dark mode, keyboard navigation and a skip
+  link are built in, and the colours meet WCAG AA contrast.
 - If one source fails (bad key, rate limit) the others still load and a notice says which one failed.
 - With no API keys it falls back to sample articles, so it still runs.
 
@@ -43,11 +51,33 @@ docker compose up --build    # http://localhost:8080
 ```
 
 The keys are passed to the container as environment variables, so nothing secret is baked into the
-image. The runtime stage only has the built files and one bundled server file, and it runs as a
-non-root user.
+image. The runtime stage only has the built files and one bundled server file. It runs as a
+non-root user with a read-only filesystem, no Linux capabilities and capped memory, and the base
+image is pinned by digest.
 
-Other scripts: `pnpm test`, `pnpm lint`, `pnpm typecheck`, `pnpm build`, `pnpm start` (runs the
-production build) and `pnpm secrets` (scans for committed secrets).
+If you start the image from Docker Desktop's Run button instead, set "Host port" to `8080` under
+Optional settings and add the three keys there. `docker compose` does all of this for you.
+
+Other scripts: `pnpm test`, `pnpm test:e2e`, `pnpm lint`, `pnpm typecheck`, `pnpm build`,
+`pnpm start` (runs the production build) and `pnpm secrets` (scans for committed secrets).
+
+## Tests
+
+- `pnpm test` runs about 280 unit and integration tests with Vitest. The client tests use a fake
+  backend, the server tests call the Hono app directly, and none of them touch a real API.
+- `pnpm test:e2e` runs the Playwright browser tests against the production build, in demo mode.
+  They cover searching, filters, the Back button and shared links, the Personalize sheet and its
+  keyboard focus, saved articles, a phone-sized screen, and automated accessibility scans (axe) in
+  light and dark mode.
+
+  ```bash
+  PW_CHANNEL=chrome pnpm test:e2e     # uses the Chrome you already have
+  pnpm exec playwright install chromium && pnpm test:e2e   # or let Playwright download one
+  ```
+
+GitHub Actions runs type-check, lint, tests, build, a production-dependency audit, the secret scan,
+the browser tests and a Docker build on every push and pull request. Dependabot keeps the
+dependencies, the Dockerfile and the workflow up to date.
 
 ## How it's put together
 
@@ -82,10 +112,11 @@ tab. Now:
 - The keys only exist in the server process. The client bundle has none of them.
 - Every request body is validated with zod (types, lengths, allowed values, no extra fields) and
   capped at 8 KB. Pages are capped at 10.
-- There's a per-IP rate limit, and the server refuses requests that a browser marks as cross-site.
+- There's a per-IP rate limit, the search endpoint only accepts JSON, and the server refuses
+  requests that a browser marks as cross-site.
 - Responses never include upstream URLs or error details, only fixed messages.
 - Article text is stripped of HTML on the server, and links must be http(s) and images https.
-- The CSP only allows scripts from our own origin.
+- The CSP only allows scripts from our own origin, and responses are gzip-compressed.
 
 Anyone can still see the two `/api` calls in their Network tab, that can't be hidden. What they can't
 do is get a key or run arbitrary requests through the server.
@@ -106,15 +137,20 @@ Husky runs these:
 
 ## Things to know
 
-- NYT's `fq` filter returned nothing when tested, so categories and authors go into the search
-  text. Results are related but not as exact as the Guardian's sections.
+- NYT's `fq` filter returned nothing when tested, so categories go into the search text instead.
+  Results are related but not as exact as the Guardian's sections.
 - Only the Guardian can be searched by author. NYT's text search finds articles that mention a
   name rather than ones written by that person, and its byline filter returned nothing. NewsAPI has
   no author search at all. For those two, the server looks through their latest articles (10 per
   page for NYT, 100 for NewsAPI) and keeps the ones whose byline matches, so an author who hasn't
   published recently won't show up. The feed then says so and offers the latest news.
 - NewsAPI's free plan only returns the first 100 results and delays them.
-- Each page is sorted newest first, but the list as a whole isn't one global sort.
+- Each page is sorted newest first, but the list as a whole isn't one global sort. "Most
+  relevant" can't be compared across sources either, so the sources take turns and each keeps its own
+  ranking.
 - The rate limiter is in memory, so it would need a shared store with more than one server instance.
 - The image was built and run with Docker Desktop 4.94 on an Apple Silicon Mac (arm64). It is about
-  236 MB, and the app works in it under the strict CSP. It hasn't been tried on x86 or in CI.
+  236 MB, and the app works in it under the strict CSP. The Docker build only runs on x86 in CI.
+- Saved articles, preferences and recent searches live in `localStorage`, so they stay on one
+  device and browser. There are no accounts.
+- The project is marked `UNLICENSED` in `package.json`. Pick a licence before sharing it publicly.
