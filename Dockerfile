@@ -1,7 +1,8 @@
 # syntax=docker/dockerfile:1
 
 # build: compile the app and bundle the server into one file
-FROM node:22-alpine AS build
+# the digest pins the exact base image, Dependabot opens a PR when it changes
+FROM node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402 AS build
 WORKDIR /app
 
 # corepack installs the pnpm version pinned in package.json
@@ -15,7 +16,7 @@ COPY . .
 RUN pnpm build
 
 # runtime: just the built output, no source, no node_modules, no keys
-FROM node:22-alpine AS runtime
+FROM node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402 AS runtime
 ENV NODE_ENV=production \
     PORT=8080 \
     STATIC_DIR=./dist

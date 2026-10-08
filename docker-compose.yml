@@ -13,6 +13,12 @@ services:
       # only set to true behind a reverse proxy you run
       TRUST_PROXY: ${TRUST_PROXY:-false}
     restart: unless-stopped
+    # reaps zombie processes and forwards signals properly
+    init: true
+    # the app idles at about 20 MB, so these are generous and stop a runaway process
+    mem_limit: 256m
+    pids_limit: 100
+    cpus: 1.0
     # the app doesn't write to disk or need any privileges
     read_only: true
     cap_drop:
