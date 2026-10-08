@@ -20,7 +20,8 @@
     "test:watch": "vitest",
     "typecheck": "tsc -b",
     "prepare": "husky",
-    "secrets": "secretlint --secretlintignore .secretlintignore \"**/*\""
+    "secrets": "secretlint --secretlintignore .secretlintignore \"**/*\"",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
@@ -44,8 +45,10 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@commitlint/cli": "^21.2.3",
     "@commitlint/config-conventional": "^21.2.3",
+    "@playwright/test": "^1.64.0",
     "@secretlint/secretlint-rule-pattern": "^13.0.7",
     "@secretlint/secretlint-rule-preset-recommend": "^13.0.7",
     "@testing-library/jest-dom": "^7.0.1",

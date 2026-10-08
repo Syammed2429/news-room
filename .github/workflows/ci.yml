@@ -59,3 +59,29 @@ jobs:
           curl -fs localhost:8080/api/news/sources | grep '"demo":true'
           curl -fs localhost:8080/ | grep -i '<title>Newsroom</title>'
           docker rm -f app
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs: checks
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+
+      # builds the app and starts it with no API keys, so the tests use the sample articles
+      - run: pnpm test:e2e
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 7
+
