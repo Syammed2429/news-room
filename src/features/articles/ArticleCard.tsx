@@ -33,7 +33,9 @@ const ArticleImage = ({ src, alt, lead }: { src?: string | undefined; alt: strin
         <img
           src={src}
           alt={alt}
-          loading="lazy"
+          // the top story is what the reader sees first, so don't wait to load it
+          loading={lead ? 'eager' : 'lazy'}
+          fetchPriority={lead ? 'high' : 'auto'}
           // stops image hosts seeing which page we're on
           referrerPolicy="no-referrer"
           onError={() => setFailed(true)}
