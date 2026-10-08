@@ -1,0 +1,21 @@
+services:
+  web:
+    build: .
+    image: news-aggregator
+    ports:
+      - "8080:8080"
+    environment:
+      # taken from your shell or the .env next to this file. Only the server sees them.
+      # Leave empty for demo mode.
+      GUARDIAN_API_KEY: ${GUARDIAN_API_KEY:-}
+      NYT_API_KEY: ${NYT_API_KEY:-}
+      NEWSAPI_API_KEY: ${NEWSAPI_API_KEY:-}
+      # only set to true behind a reverse proxy you run
+      TRUST_PROXY: ${TRUST_PROXY:-false}
+    restart: unless-stopped
+    # the app doesn't write to disk or need any privileges
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
