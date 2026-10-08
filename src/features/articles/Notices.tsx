@@ -71,7 +71,7 @@ export const EmptyState = ({ onClear }: { onClear?: () => void }) => {
       action={
         onClear && (
           <Button variant="outline" onClick={onClear}>
-            Clear filters
+            Clear search and filters
           </Button>
         )
       }

@@ -9,7 +9,7 @@ import { EmptyState, ErrorState, FailureBanner, PersonalizePrompt } from './Noti
 import { ScrollSentinel } from './ScrollSentinel'
 
 export const ResultsView = () => {
-  const resetFilters = useSearchStore((s) => s.resetFilters)
+  const resetAll = useSearchStore((s) => s.resetAll)
   const view = useSearchStore((s) => s.view)
   const query = useSearchStore((s) => s.query)
   const feed = useNewsFeed()
@@ -24,7 +24,7 @@ export const ResultsView = () => {
     return (
       <div className="flex flex-col gap-4">
         <FailureBanner failures={feed.failures} />
-        {feed.failures.length > 0 ? <ErrorState onRetry={feed.refetch} /> : <EmptyState onClear={resetFilters} />}
+        {feed.failures.length > 0 ? <ErrorState onRetry={feed.refetch} /> : <EmptyState onClear={resetAll} />}
       </div>
     )
   }

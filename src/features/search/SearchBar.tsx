@@ -1,5 +1,5 @@
 import { SearchIcon, XIcon } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useDebouncedCallback } from '@/hooks/useDebouncedCallback'
@@ -12,9 +12,10 @@ const DEBOUNCE_MS = 500
 const MIN_LENGTH = 2
 
 export const SearchBar = () => {
-  const query = useSearchStore((s) => s.query)
+  const draft = useSearchStore((s) => s.draft)
+  const setDraft = useSearchStore((s) => s.setDraft)
   const setQuery = useSearchStore((s) => s.setQuery)
-  const [draft, setDraft] = useState(query)
+  const clearSearch = useSearchStore((s) => s.clearSearch)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const apply = (value: string) => {
@@ -22,7 +23,9 @@ export const SearchBar = () => {
     setQuery(parsed.success ? parsed.data : '')
   }
 
-  const debounced = useDebouncedCallback((value: string) => {
+  const debounced = useDebouncedCallback(() => {
+    // read the box when the timer fires, so text cleared in the meantime isn't searched
+    const value = useSearchStore.getState().draft
     const length = value.trim().length
     // empty clears the search, a lone letter is ignored
     if (length === 0 || length >= MIN_LENGTH) apply(value)
@@ -51,7 +54,7 @@ export const SearchBar = () => {
           value={draft}
           onChange={(event) => {
             setDraft(event.target.value)
-            debounced.run(event.target.value)
+            debounced.run()
           }}
           placeholder="Search articles"
           aria-label="Search articles"
@@ -66,8 +69,7 @@ export const SearchBar = () => {
             className="absolute top-1/2 right-1.5 -translate-y-1/2"
             onClick={() => {
               debounced.cancel()
-              setDraft('')
-              setQuery('')
+              clearSearch()
               inputRef.current?.focus()
             }}
           >

@@ -58,7 +58,15 @@ const renderApp = () => {
 beforeEach(() => {
   fakeBackend.mockImplementation(defaultBackend)
   vi.stubGlobal('fetch', fakeBackend)
-  useSearchStore.setState({ view: 'latest', query: '', category: null, providerIds: [], from: undefined, to: undefined })
+  useSearchStore.setState({
+    view: 'latest',
+    query: '',
+    draft: '',
+    category: null,
+    providerIds: [],
+    from: undefined,
+    to: undefined,
+  })
   usePreferencesStore.setState({ providerIds: [], categories: [], authors: [] })
 })
 
@@ -138,6 +146,34 @@ describe('App', () => {
       expect(box).toHaveValue('')
       expect(useSearchStore.getState().query).toBe('')
     })
+  })
+
+  it('clears the search text from the empty state too', async () => {
+    const user = userEvent.setup()
+    renderApp()
+    await screen.findAllByRole('article')
+
+    const box = screen.getByRole('textbox', { name: /search articles/i })
+    await user.type(box, 'zzzzzz{enter}')
+    await user.click(await screen.findByRole('button', { name: /clear search and filters/i }))
+
+    expect(box).toHaveValue('')
+    expect(useSearchStore.getState().query).toBe('')
+    expect(await screen.findAllByRole('article')).toHaveLength(3)
+  })
+
+  it('does not bring back cleared text when the debounce timer fires late', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    renderApp()
+    await screen.findAllByRole('article')
+
+    await user.type(screen.getByRole('textbox', { name: /search articles/i }), 'telescope')
+    act(() => useSearchStore.getState().resetAll())
+    await act(() => vi.advanceTimersByTimeAsync(1000))
+
+    expect(useSearchStore.getState().query).toBe('')
+    vi.useRealTimers()
   })
 
   it('shows the demo notice when the server is serving sample data', async () => {
