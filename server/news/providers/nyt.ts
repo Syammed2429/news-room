@@ -2,7 +2,7 @@ import type { Article, NewsProvider, SearchParams } from '@shared/news'
 import { buildUrl, fetchJson } from '../../http/fetchJson'
 import { mapCategories } from '../categories'
 import { PAGE_SIZE } from '../constants'
-import { quotedList, safeImageUrl, safeUrl, stripByline } from '../text'
+import { safeImageUrl, safeUrl, stripByline } from '../text'
 
 const ENDPOINT = 'https://api.nytimes.com/svc/search/v2/articlesearch.json'
 const IMAGE_HOST = 'https://www.nytimes.com/'
@@ -67,10 +67,12 @@ const toArticle = (doc: NytDoc): Article | undefined => {
   }
 }
 
-// what the reader typed, plus category words and quoted author names
-const buildQuery = ({ query, categories, authors }: SearchParams): string | undefined => {
+// What the reader typed, plus category words. Author names are left out on purpose: q only
+// matches articles that mention the name, not ones written by that person, and the byline
+// filter (fq) returns nothing. The aggregator keeps just the matching bylines instead.
+const buildQuery = ({ query, categories }: SearchParams): string | undefined => {
   const terms = mapCategories(categories, CATEGORY_TERMS)
-  return [query, terms.join(' '), quotedList(authors, ' ')].filter(Boolean).join(' ') || undefined
+  return [query, terms.join(' ')].filter(Boolean).join(' ') || undefined
 }
 
 const compactDate = (date?: string) => date?.replaceAll('-', '')

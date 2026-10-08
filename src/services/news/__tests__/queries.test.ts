@@ -44,11 +44,9 @@ describe('buildFeedRequest', () => {
 describe('buildFeedRequest with partial preferences', () => {
   const search = { query: '', from: undefined, to: undefined }
 
-  it('keeps the base feed when only authors are chosen, so it is never empty', () => {
+  it('asks only for the chosen authors when nothing else is picked', () => {
     const request = buildFeedRequest({ providerIds: [], categories: [], authors: ['Jane Doe'] }, search)
-    expect(request.queries).toHaveLength(2)
-    expect(request.queries[0]).toMatchObject({ categories: [], authors: [] })
-    expect(request.queries[1]).toMatchObject({ categories: [], authors: ['Jane Doe'] })
+    expect(request.queries).toEqual([expect.objectContaining({ categories: [], authors: ['Jane Doe'] })])
   })
 
   it('still returns the latest from preferred sources when only sources are chosen', () => {

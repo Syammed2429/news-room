@@ -17,17 +17,23 @@ export const buildLatestRequest = (filters: ArticleFilters): NewsRequest => {
   }
 }
 
-// The first query is the base feed (preferred sources and categories). None of the news APIs
-// can search by author reliably, so followed authors get a second query and the server sorts
-// their articles to the top. The base query is always there so the feed is never empty
-// just because a followed author hasn't published recently.
+// The feed is a union: articles in the preferred categories, plus articles by the preferred
+// authors. Authors get their own query because the APIs have no author filter. If only authors
+// are picked, there is no category query, so the feed holds just those authors.
 export const buildFeedRequest = (
   preferences: Preferences,
   search: Pick<ArticleFilters, 'query' | 'from' | 'to'>,
 ): NewsRequest => {
   const base = { query: search.query, from: search.from, to: search.to }
-  const queries: SearchParams[] = [{ ...base, categories: preferences.categories, authors: [] }]
-  if (preferences.authors.length > 0) {
+  const hasAuthors = preferences.authors.length > 0
+  const queries: SearchParams[] = []
+
+  // no categories means "everything", so only send this when categories are set,
+  // or when it's the only query (sources-only preferences)
+  if (preferences.categories.length > 0 || !hasAuthors) {
+    queries.push({ ...base, categories: preferences.categories, authors: [] })
+  }
+  if (hasAuthors) {
     queries.push({ ...base, categories: [], authors: preferences.authors })
   }
   return { queries, providerIds: preferences.providerIds }

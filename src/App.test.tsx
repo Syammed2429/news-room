@@ -211,20 +211,24 @@ describe('App', () => {
 
     await user.click(screen.getByRole('tab', { name: /for you/i }))
 
-    // the base feed plus the followed author's articles
-    await waitFor(() => expect(screen.getAllByRole('article')).toHaveLength(3))
-    expect(screen.getAllByRole('article').some((card) => card.textContent?.includes(author))).toBe(true)
-    expect(screen.queryByText(/no recent articles by/i)).not.toBeInTheDocument()
+    // only the articles written by the author we followed
+    await waitFor(() => expect(screen.getAllByRole('article')).toHaveLength(2))
+    screen.getAllByRole('article').forEach((card) => expect(card).toHaveTextContent(author))
   })
 
-  it('explains it when none of the followed authors have articles, and still shows news', async () => {
+  it('says so when a followed author has nothing, and offers the latest news', async () => {
     const user = userEvent.setup()
     usePreferencesStore.setState({ authors: ['Nobody Known'] })
     renderApp()
 
     await user.click(screen.getByRole('tab', { name: /for you/i }))
 
-    expect(await screen.findByText(/no recent articles by nobody known/i)).toBeInTheDocument()
+    expect(await screen.findByText(/nothing from your picks yet/i)).toBeInTheDocument()
+    expect(screen.getByText(/no recent articles by nobody known/i)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /show the latest news/i }))
+
+    expect(screen.getByRole('tab', { name: /latest/i })).toHaveAttribute('aria-selected', 'true')
     expect(await screen.findAllByRole('article')).toHaveLength(3)
   })
 

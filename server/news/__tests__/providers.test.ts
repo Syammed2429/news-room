@@ -49,6 +49,24 @@ describe('guardian provider', () => {
     })
   })
 
+  it('uses the contributor names instead of a byline that has job titles in it', async () => {
+    stubFetch({
+      response: {
+        currentPage: 1,
+        pages: 1,
+        results: [
+          {
+            ...payload.response.results[0],
+            fields: { byline: 'Dan Sabbagh Defence and security editor' },
+            tags: [{ webTitle: 'Dan Sabbagh' }],
+          },
+        ],
+      },
+    })
+    const [article] = (await createGuardianProvider('k').search(base, 1)).articles
+    expect(article?.author).toBe('Dan Sabbagh')
+  })
+
   it('sends filters in the Guardian vocabulary', async () => {
     const { lastUrl } = stubFetch(payload)
     await createGuardianProvider('k').search(
@@ -95,7 +113,7 @@ describe('nyt provider', () => {
     expect(result.hasMore).toBe(true)
   })
 
-  it('uses 0-based pages, compact dates and folds categories and authors into q', async () => {
+  it('uses 0-based pages, compact dates and puts category words into q', async () => {
     const { lastUrl } = stubFetch(payload)
     await createNytProvider('k').search(
       { query: 'ai', categories: ['world', 'sports'], authors: ['Jane Doe'], from: '2025-01-01', to: '2025-01-31' },
@@ -105,8 +123,15 @@ describe('nyt provider', () => {
     expect(params.get('page')).toBe('2')
     expect(params.get('begin_date')).toBe('20250101')
     expect(params.get('end_date')).toBe('20250131')
-    expect(params.get('q')).toBe('ai world sports "Jane Doe"')
+    expect(params.get('q')).toBe('ai world sports')
     expect(params.has('fq')).toBe(false)
+  })
+
+  it('does not send author names, since q only finds articles that mention them', async () => {
+    const { lastUrl } = stubFetch(payload)
+    await createNytProvider('k').search({ ...base, authors: ['Jane Doe'] }, 1)
+    expect(lastUrl().searchParams.has('q')).toBe(false)
+    expect(lastUrl().searchParams.get('sort')).toBe('newest')
   })
 
   it('treats the null docs NYT returns for empty results as no articles', async () => {
@@ -182,6 +207,16 @@ describe('newsapi provider', () => {
     await createNewsApiProvider('k').search({ ...base, categories: ['politics'] }, 1)
     expect(lastUrl().pathname).toBe('/v2/everything')
     expect(lastUrl().searchParams.get('q')).toBe('("politics")')
+  })
+
+  it('scans 100 of the latest when looking for an author, without searching the name', async () => {
+    const { lastUrl } = stubFetch({ ...payload, totalResults: 250 })
+    const result = await createNewsApiProvider('k').search({ ...base, authors: ['Jane Doe'] }, 1)
+    expect(lastUrl().pathname).toBe('/v2/top-headlines')
+    expect(lastUrl().searchParams.get('pageSize')).toBe('100')
+    expect(lastUrl().searchParams.has('q')).toBe(false)
+    // the free plan stops at 100 results, and this request already took all of them
+    expect(result.hasMore).toBe(false)
   })
 
   it('surfaces rate limiting as a readable error', async () => {

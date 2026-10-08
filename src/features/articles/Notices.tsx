@@ -62,6 +62,23 @@ const CenteredState = ({ icon, title, description, action }: StateProps) => {
   )
 }
 
+export const FeedEmptyState = ({ authors, onShowLatest }: { authors: string[]; onShowLatest: () => void }) => (
+  <CenteredState
+    icon={<NewspaperIcon aria-hidden />}
+    title="Nothing from your picks yet"
+    description={
+      authors.length > 0
+        ? `No recent articles by ${authors.join(', ')} in your sources. Only the Guardian can be searched by author, for the others we look through their latest articles.`
+        : 'No recent articles match your preferences.'
+    }
+    action={
+      <Button variant="outline" onClick={onShowLatest}>
+        Show the latest news
+      </Button>
+    }
+  />
+)
+
 export const EmptyState = ({ onClear }: { onClear?: () => void }) => {
   return (
     <CenteredState

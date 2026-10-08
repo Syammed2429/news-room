@@ -7,6 +7,8 @@ import { htmlToText, quotedList, safeImageUrl, safeUrl } from '../text'
 const BASE = 'https://newsapi.org/v2'
 // the free plan stops at 100 results
 const MAX_RESULTS = 100
+// when looking for an author we scan more of the latest in one request, it costs the same quota
+const SCAN_PAGE_SIZE = 100
 const REMOVED = '[Removed]'
 
 const HEADLINE_CATEGORIES: Partial<Record<Category, string>> = {
@@ -67,6 +69,9 @@ const toArticle = (item: NewsApiArticle): Article | undefined => {
 
 const orGroup = (terms: string[]) => (terms.length > 0 ? `(${quotedList(terms, ' OR ')})` : '')
 
+// NewsAPI can't search by author at all, so authors don't change what we ask for.
+// The aggregator keeps just the matching bylines from what comes back.
+
 // one call we plan to make
 interface PlannedRequest {
   endpoint: 'everything' | 'top-headlines'
@@ -82,8 +87,8 @@ const planRequests = (params: SearchParams): PlannedRequest[] => {
   const keywords = mapCategories(params.categories, CATEGORY_KEYWORDS)
   const headlineCategories = mapCategories(params.categories, HEADLINE_CATEGORIES)
 
-  if (hasDates || hasCategoryWithoutHeadlines || params.authors.length > 0) {
-    const q = [params.query && `(${params.query})`, orGroup(params.authors), orGroup(keywords)]
+  if (hasDates || hasCategoryWithoutHeadlines) {
+    const q = [params.query && `(${params.query})`, orGroup(keywords)]
       .filter(Boolean)
       .join(' AND ')
     return [{ endpoint: 'everything', q: q || 'news' }]
@@ -106,6 +111,7 @@ export const createNewsApiProvider = (apiKey: string): NewsProvider => {
     signal?: AbortSignal,
   ) => {
     const everything = request.endpoint === 'everything'
+    const size = params.authors.length > 0 ? SCAN_PAGE_SIZE : PAGE_SIZE
     return fetchJson<NewsApiResponse>(
       buildUrl(`${BASE}/${request.endpoint}`, {
         q: request.q,
@@ -115,7 +121,7 @@ export const createNewsApiProvider = (apiKey: string): NewsProvider => {
         to: params.to,
         sortBy: everything ? (params.query ? 'relevancy' : 'publishedAt') : undefined,
         language: everything ? 'en' : undefined,
-        pageSize: PAGE_SIZE,
+        pageSize: size,
         page,
       }),
       // the key goes in a header so it never ends up in a URL or a log
@@ -127,6 +133,7 @@ export const createNewsApiProvider = (apiKey: string): NewsProvider => {
     id: 'newsapi',
     name: 'NewsAPI',
     search: async (params, page, signal) => {
+      const size = params.authors.length > 0 ? SCAN_PAGE_SIZE : PAGE_SIZE
       const responses = await Promise.all(
         planRequests(params).map((request) => run(request, params, page, signal)),
       )
@@ -137,7 +144,7 @@ export const createNewsApiProvider = (apiKey: string): NewsProvider => {
             .map(toArticle)
             .filter((a): a is Article => a !== undefined),
         ),
-        hasMore: responses.some((r) => page * PAGE_SIZE < Math.min(r.totalResults, MAX_RESULTS)),
+        hasMore: responses.some((r) => page * size < Math.min(r.totalResults, MAX_RESULTS)),
       }
     },
   }

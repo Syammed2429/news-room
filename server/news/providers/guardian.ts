@@ -25,6 +25,7 @@ interface GuardianResult {
   webPublicationDate: string
   sectionName?: string
   fields?: { thumbnail?: string; trailText?: string; byline?: string }
+  tags?: { webTitle: string }[]
 }
 
 interface GuardianResponse {
@@ -35,7 +36,10 @@ const toArticle = (item: GuardianResult): Article | undefined => {
   const url = safeUrl(item.webUrl)
   if (!url) return undefined
   const imageUrl = safeImageUrl(item.fields?.thumbnail)
-  const author = item.fields?.byline?.trim()
+  // The byline has job titles stuck on ("Dan Sabbagh Defence and security editor"), the
+  // contributor tags are just the names, so use those and fall back to the byline.
+  const contributors = (item.tags ?? []).map((tag) => tag.webTitle).filter(Boolean)
+  const author = contributors.length > 0 ? contributors.join(', ') : item.fields?.byline?.trim()
   return {
     id: `guardian:${item.id}`,
     provider: 'guardian',
@@ -75,6 +79,7 @@ export const createGuardianProvider = (apiKey: string): NewsProvider => ({
         'to-date': params.to,
         'order-by': params.query ? 'relevance' : 'newest',
         'show-fields': 'thumbnail,trailText,byline',
+        'show-tags': 'contributor',
         'page-size': PAGE_SIZE,
         page,
       }),
