@@ -9,6 +9,7 @@ import { usePreferencesStore } from './store/preferences'
 import { useRecentStore } from './store/recent'
 import { useSavedStore } from './store/saved'
 import { useSearchStore } from './store/search'
+import { NEW_ARTICLES_POLL_MS } from './hooks/useNewArticles'
 
 const article = (n: number, title: string, author: string): Article => ({
   id: `a:${n}`,
@@ -22,6 +23,9 @@ const article = (n: number, title: string, author: string): Article => ({
   ...(n === 1 && { imageUrl: 'https://cdn.example/1.jpg' }),
   publishedAt: new Date(Date.UTC(2025, 0, 10 - n)).toISOString(),
 })
+
+// stories "published" after the page loaded, newest first
+const justPublished: Article[] = []
 
 const FIXTURE = [
   article(1, 'Telescope captures earliest galaxy', 'Maya Chen'),
@@ -37,7 +41,7 @@ const defaultBackend = async (url: string, init?: RequestInit) => {
 
   const { request } = JSON.parse(String(init?.body)) as NewsSearchBody
   const articles = request.queries.flatMap(({ query, authors }) =>
-    FIXTURE.filter(
+    [...justPublished, ...FIXTURE].filter(
       (a) =>
         a.title.toLowerCase().includes(query.toLowerCase()) &&
         (authors.length === 0 || authors.some((name) => a.author?.includes(name))),
@@ -58,6 +62,7 @@ const renderApp = () => {
 }
 
 beforeEach(() => {
+  justPublished.length = 0
   fakeBackend.mockImplementation(defaultBackend)
   vi.stubGlobal('fetch', fakeBackend)
   useSearchStore.setState({
@@ -305,6 +310,51 @@ describe('App', () => {
         .filter(([url]) => url.endsWith('/search'))
         .map(([, init]) => JSON.parse(String(init?.body)) as NewsSearchBody)
       expect(bodies.at(-1)?.request.queries[0]?.sort).toBe('relevance')
+    })
+  })
+
+  describe('new articles', () => {
+    beforeEach(() => {
+      vi.useFakeTimers({ shouldAdvanceTime: true })
+      vi.stubGlobal('scrollTo', vi.fn())
+    })
+    afterEach(() => vi.useRealTimers())
+
+    const wait = (ms: number) => act(() => vi.advanceTimersByTimeAsync(ms))
+
+    it('says nothing while nothing new has been published', async () => {
+      renderApp()
+      await screen.findAllByRole('article')
+
+      await wait(NEW_ARTICLES_POLL_MS + 1000)
+
+      expect(screen.queryByRole('button', { name: /new article/i })).not.toBeInTheDocument()
+    })
+
+    it('tells the reader about a newer story, and a tap refreshes the list', async () => {
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+      renderApp()
+      await screen.findAllByRole('article')
+
+      justPublished.push(article(9, 'Breaking: a fresh story', 'Ada Newsworthy'))
+      await wait(NEW_ARTICLES_POLL_MS + 1000)
+
+      await user.click(await screen.findByRole('button', { name: /1 new article$/i }))
+
+      expect(await screen.findByRole('heading', { name: /breaking: a fresh story/i })).toBeInTheDocument()
+      await waitFor(() => expect(screen.queryByRole('button', { name: /new article/i })).not.toBeInTheDocument())
+    })
+
+    it('does not check on the Saved tab, which never talks to the server', async () => {
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+      renderApp()
+      await screen.findAllByRole('article')
+      await user.click(screen.getByRole('tab', { name: /saved/i }))
+      fakeBackend.mockClear()
+
+      await wait(NEW_ARTICLES_POLL_MS * 2)
+
+      expect(fakeBackend.mock.calls.filter(([url]) => url.endsWith('/search'))).toHaveLength(0)
     })
   })
 

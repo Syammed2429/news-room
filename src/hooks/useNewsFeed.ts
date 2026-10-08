@@ -1,6 +1,7 @@
 import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query'
 import { FIRST_PAGE, mergePages, type AggregatedPage } from '@shared/pagination'
 import { newsClient } from '@/services/news/newsClient'
+import { useNewArticles } from './useNewArticles'
 import { buildFeedRequest, buildLatestRequest, hasPreferences } from '@/services/news/queries'
 import { usePreferencesStore } from '@/store/preferences'
 import { useSearchStore } from '@/store/search'
@@ -33,8 +34,18 @@ export const useNewsFeed = () => {
     placeholderData: keepPreviousData,
   })
 
+  const articles = result.data?.articles ?? []
+  const { newCount, showNew } = useNewArticles({
+    request,
+    articles,
+    // only the news tabs have anything to check
+    enabled: !needsPreferences && view !== 'saved',
+  })
+
   return {
-    articles: result.data?.articles ?? [],
+    articles,
+    newCount,
+    showNew,
     failures: result.data?.failures ?? [],
     pageCount: result.data?.pageCount ?? 0,
     needsPreferences,

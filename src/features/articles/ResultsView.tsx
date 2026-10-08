@@ -5,6 +5,7 @@ import { useSearchStore } from '@/store/search'
 import { MAX_PAGE } from '@shared/pagination'
 import { SortToggle } from '@/features/search/SortToggle'
 import { ArticleGrid } from './ArticleGrid'
+import { NewArticlesPill } from './NewArticlesPill'
 import { ArticleSkeletons } from './ArticleSkeletons'
 import { SavedArticles } from './SavedArticles'
 import { EmptyState, EndNote, ErrorState, FailureBanner, FeedEmptyState, PersonalizePrompt } from './Notices'
@@ -43,6 +44,7 @@ export const ResultsView = () => {
   return (
     <div className="flex flex-col gap-4">
       <FailureBanner failures={feed.failures} />
+      <NewArticlesPill count={feed.newCount} onShow={feed.showNew} />
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p aria-live="polite" className="text-sm text-muted-foreground">
           {feed.articles.length} {feed.articles.length === 1 ? 'article' : 'articles'}
