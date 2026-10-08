@@ -7,8 +7,17 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { XIcon } from "lucide-react"
 
-const Sheet = ({ ...props }: SheetPrimitive.Root.Props) => {
-  return <SheetPrimitive.Root data-slot="sheet" {...props} />
+const Sheet = ({ onOpenChange, ...props }: SheetPrimitive.Root.Props) => {
+  return (
+    <SheetPrimitive.Root
+      data-slot="sheet"
+      onOpenChange={(open, details) => {
+        if (!open) releasePage()
+        onOpenChange?.(open, details)
+      }}
+      {...props}
+    />
+  )
 }
 
 const SheetTrigger = ({ ...props }: SheetPrimitive.Trigger.Props) => {
@@ -36,6 +45,23 @@ const SheetOverlay = ({ className, ...props }: SheetPrimitive.Backdrop.Props) =>
   )
 }
 
+// Base UI's own focus trap lets Tab escape to the page behind the sheet. Marking the app root
+// inert while the sheet is open fixes that: inert content can't be focused or reached by screen
+// readers. The sheet renders in a portal on <body>, outside #root, so it isn't affected.
+const pageRoot = () => document.getElementById('root')
+
+// released as soon as closing starts, not when the exit animation ends, because Base UI
+// returns focus to the trigger (inside #root) while it closes and inert would block that
+const releasePage = () => pageRoot()?.removeAttribute('inert')
+
+const holdPage = (node: HTMLElement | null) => {
+  if (!node) return
+  pageRoot()?.setAttribute('inert', '')
+  // inert drops focus from the trigger, so put it in the dialog straight away
+  node.focus({ preventScroll: true })
+  return releasePage // also covers the sheet unmounting without a close event
+}
+
 const SheetContent = ({
   className,
   children,
@@ -50,6 +76,8 @@ const SheetContent = ({
     <SheetPortal>
       <SheetOverlay />
       <SheetPrimitive.Popup
+        ref={holdPage}
+        initialFocus
         data-slot="sheet-content"
         data-side={side}
         className={cn(

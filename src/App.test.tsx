@@ -86,7 +86,8 @@ describe('App', () => {
 
     await waitFor(() => {
       const titles = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)
-      expect(titles).toEqual(['Telescope captures earliest galaxy'])
+      // each title also carries a screen-reader-only "(opens in a new tab)"
+      expect(titles).toEqual([expect.stringContaining('Telescope captures earliest galaxy')])
     })
   })
 
@@ -281,6 +282,21 @@ describe('App', () => {
 
     await user.click(within(filters).getByRole('button', { name: /clear all/i }))
     expect(useSearchStore.getState()).toMatchObject({ providerIds: [], from: undefined })
+  })
+
+  it('has one top-level heading that follows the tab', async () => {
+    const user = userEvent.setup()
+    renderApp()
+    expect(await screen.findByRole('heading', { level: 1 })).toHaveTextContent('Latest news')
+
+    await user.click(screen.getByRole('tab', { name: /for you/i }))
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Your news feed')
+  })
+
+  it('makes the follow buttons big enough to tap', async () => {
+    renderApp()
+    const [button] = await screen.findAllByTitle(/^Follow /)
+    expect(button).toHaveClass('min-h-6')
   })
 
   it('offers a skip link for keyboard users', async () => {

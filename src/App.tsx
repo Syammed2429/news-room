@@ -33,6 +33,7 @@ const App = () => {
           </div>
         </aside>
         <div id="content" tabIndex={-1} className="flex min-w-0 flex-col gap-4 outline-none">
+          <h1 className="sr-only">{view === 'feed' ? 'Your news feed' : 'Latest news'}</h1>
           {isDemo && (
             <Banner>
               Showing sample articles. Add API keys on the server (see the README) to load live news.

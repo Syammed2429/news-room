@@ -68,7 +68,7 @@ const AuthorFollowButtons = ({ byline }: { byline: string }) => {
             disabled={limitReached}
             title={limitReached ? `You can follow up to ${MAX_AUTHORS} authors` : isFollowed ? `Unfollow ${name}` : `Follow ${name}`}
             className={cn(
-              'relative z-10 inline-flex items-center gap-1 rounded text-xs font-medium outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline',
+              'relative z-10 inline-flex min-h-6 items-center gap-1 rounded text-xs font-medium outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline',
               isFollowed ? 'text-primary' : 'text-foreground/80',
             )}
           >
@@ -116,6 +116,7 @@ export const ArticleCard = ({ article, index, variant = 'default' }: Props) => {
             className="outline-none after:absolute after:inset-0 after:content-[''] focus-visible:after:ring-3 focus-visible:after:ring-ring/50 focus-visible:after:rounded-xl"
           >
             {title}
+            <span className="sr-only"> (opens in a new tab)</span>
           </a>
         </h2>
         {summary && (
