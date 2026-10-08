@@ -20,7 +20,7 @@ const faviconUrl = (articleUrl: string): string | undefined => {
 // "The Washington Post" should show W, not T
 const initial = (publisher: string) => publisher.replace(/^the\s+/i, '').charAt(0).toUpperCase()
 
-const round = 'grid size-6 shrink-0 place-items-center overflow-hidden rounded-full bg-white ring-1 ring-foreground/10'
+const round = 'grid size-6 shrink-0 place-items-center overflow-hidden rounded-full bg-white ring-1 ring-foreground/10 dark:ring-white/15'
 
 const Mark = ({ publisher, url }: Props) => {
   const [faviconFailed, setFaviconFailed] = useState(false)
@@ -28,7 +28,7 @@ const Mark = ({ publisher, url }: Props) => {
   const logo = findPublisherLogo(publisher)
   if (logo?.box) {
     return (
-      <span aria-hidden className="grid h-6 w-14 shrink-0 place-items-center rounded-md bg-white px-1.5 ring-1 ring-foreground/10">
+      <span aria-hidden className="grid h-6 w-14 shrink-0 place-items-center rounded-md bg-white px-1.5 ring-1 ring-foreground/10 dark:ring-white/15">
         <svg viewBox={logo.box} className="size-full" fill={`#${logo.hex}`}>
           <path d={logo.path} />
         </svg>

@@ -92,7 +92,7 @@ export const ArticleCard = ({ article, index, variant = 'default' }: Props) => {
       transition={{ duration: 0.3, delay: Math.min(index, 9) * 0.04 }}
       whileHover={{ y: -4 }}
       className={cn(
-        'group relative flex h-full flex-col overflow-hidden rounded-xl bg-card text-card-foreground shadow-sm ring-1 ring-foreground/10 transition-shadow hover:shadow-md',
+        'group relative flex h-full flex-col overflow-hidden rounded-xl bg-card text-card-foreground shadow-sm ring-1 ring-foreground/10 dark:ring-white/15 transition-shadow hover:shadow-md',
         lead && 'md:flex-row',
       )}
     >
