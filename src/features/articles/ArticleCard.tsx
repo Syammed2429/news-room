@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { splitAuthors } from '@/lib/text'
 import { usePreferencesStore } from '@/store/preferences'
+import { PublisherBadge } from './PublisherBadge'
 import { authorNameSchema, MAX_AUTHORS } from '@shared/schemas'
 import type { Article } from '@shared/news'
 
@@ -98,13 +99,7 @@ export const ArticleCard = ({ article, index, variant = 'default' }: Props) => {
       <ArticleImage src={imageUrl} alt="" lead={lead} />
       <div className={cn('flex flex-1 flex-col gap-2 p-4', lead && 'md:justify-center md:gap-3 md:p-8')}>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span
-            aria-hidden
-            className="grid size-5 shrink-0 place-items-center rounded-full bg-primary/10 text-[10px] font-semibold text-primary"
-          >
-            {publisher.charAt(0).toUpperCase()}
-          </span>
-          <span className="truncate">{publisher}</span>
+          <PublisherBadge publisher={publisher} url={url} />
           {section && <Badge variant="secondary">{section}</Badge>}
           {lead && <Badge>Top story</Badge>}
         </div>
