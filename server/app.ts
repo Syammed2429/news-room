@@ -29,6 +29,7 @@ export const createApp = ({ aggregator, demo, trustProxy, rateLimit: limits, sta
         // thumbnails come from the publishers' own CDNs
         imgSrc: ["'self'", 'https:', 'data:'],
         fontSrc: ["'self'"],
+        manifestSrc: ["'self'"],
         connectSrc: ["'self'"],
         baseUri: ["'none'"],
         formAction: ["'self'"],

@@ -3,9 +3,21 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Newsroom: one place for articles from The Guardian, The New York Times and NewsAPI." />
     <title>Newsroom</title>
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#141414" media="(prefers-color-scheme: dark)" />
+
+    <!-- how a shared link looks. There is no og:image because it needs an absolute URL, which depends on where this is hosted -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Newsroom" />
+    <meta property="og:title" content="Newsroom" />
+    <meta property="og:description" content="News from The Guardian, The New York Times and NewsAPI in one place. Search, filter and save what you want to read." />
+    <meta name="twitter:card" content="summary" />
+
     <!-- the two biggest image hosts, so the first thumbnails start sooner -->
     <link rel="preconnect" href="https://media.guim.co.uk" />
     <link rel="preconnect" href="https://static01.nyt.com" />

@@ -132,6 +132,7 @@ describe('security headers', () => {
     expect(csp).not.toMatch(/script-src[^;]*unsafe-inline/)
     expect(csp).toContain("frame-ancestors 'none'")
     expect(csp).toContain("connect-src 'self'")
+    expect(csp).toContain("manifest-src 'self'")
     expect(response.headers.get('x-content-type-options')).toBe('nosniff')
     expect(response.headers.get('x-frame-options')).toBe('DENY')
     expect(response.headers.get('referrer-policy')).toBe('no-referrer')
