@@ -1,4 +1,5 @@
 import { BackToTop } from '@/components/BackToTop'
+import { LoadingBar } from '@/components/LoadingBar'
 import { Header } from '@/components/layout/Header'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Banner } from '@/features/articles/Notices'
@@ -52,6 +53,7 @@ const App = () => {
               <MobileFilters />
             </div>
             {view === 'latest' && <CategoryChips />}
+            <LoadingBar />
           </div>
           {view === 'latest' && <ActiveFilters />}
           <ResultsView />
