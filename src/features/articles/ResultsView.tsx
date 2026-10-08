@@ -6,6 +6,7 @@ import { MAX_PAGE } from '@shared/pagination'
 import { SortToggle } from '@/features/search/SortToggle'
 import { ArticleGrid } from './ArticleGrid'
 import { NewArticlesPill } from './NewArticlesPill'
+import { PrefetchOnScroll } from './PrefetchOnScroll'
 import { ArticleSkeletons } from './ArticleSkeletons'
 import { SavedArticles } from './SavedArticles'
 import { EmptyState, EndNote, ErrorState, FailureBanner, FeedEmptyState, PersonalizePrompt } from './Notices'
@@ -51,6 +52,11 @@ export const ResultsView = () => {
         </p>
         {query && <SortToggle />}
       </div>
+      {/* gets page 2 started on the first scroll; once it is loaded there is nothing left to do */}
+      <PrefetchOnScroll
+        onScrolled={() => feed.loadMore()}
+        disabled={!feed.hasMore || feed.isFetchingMore || feed.pageCount > 1}
+      />
       <ArticleGrid articles={feed.articles} dimmed={feed.isRefreshing} topStory={view === 'latest' && !query} />
       {feed.isFetchingMore && <ArticleSkeletons count={3} />}
       {feed.hasMore ? (

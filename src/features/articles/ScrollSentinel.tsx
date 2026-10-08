@@ -4,8 +4,9 @@ interface Props {
   disabled?: boolean
 }
 
-// start loading a bit before the bottom is reached
-const LOOKAHEAD = '600px'
+// Start loading well before the bottom: about four rows of cards, so the next page has a few
+// seconds to arrive while the reader is still looking at the current one.
+const LOOKAHEAD = '2000px'
 
 export const ScrollSentinel = ({ onReach, disabled = false }: Props) => {
   return (
