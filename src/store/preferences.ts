@@ -7,6 +7,7 @@ import type { Category, ProviderId } from '@shared/news'
 
 interface PreferencesState extends Preferences {
   toggleProvider: (id: ProviderId) => void
+  keepProviders: (known: ProviderId[]) => void
   toggleCategory: (category: Category) => void
   toggleAuthor: (author: string) => void
   clear: () => void
@@ -19,6 +20,8 @@ export const usePreferencesStore = create<PreferencesState>()(
     (set) => ({
       ...empty,
       toggleProvider: (id) => set((s) => ({ providerIds: toggleItem(s.providerIds, id) })),
+      keepProviders: (known) =>
+        set((s) => (s.providerIds.every((id) => known.includes(id)) ? s : { providerIds: s.providerIds.filter((id) => known.includes(id)) })),
       toggleCategory: (category) => set((s) => ({ categories: toggleItem(s.categories, category) })),
       // the API takes at most MAX_AUTHORS names
       toggleAuthor: (author) =>

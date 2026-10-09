@@ -17,6 +17,8 @@ interface SearchState extends ArticleFilters {
   setCategory: (category: Category | null) => void
   setSort: (sort: Sort) => void
   toggleProvider: (id: ProviderId) => void
+  // drops source ids the server doesn't know, e.g. from an old shared link
+  keepProviders: (known: ProviderId[]) => void
   setFrom: (from: string | undefined) => void
   setTo: (to: string | undefined) => void
   resetFilters: () => void
@@ -46,6 +48,8 @@ export const useSearchStore = create<SearchState>()((set) => ({
   setCategory: (category) => set({ category }),
   setSort: (sort) => set({ sort }),
   toggleProvider: (id) => set((s) => ({ providerIds: toggleItem(s.providerIds, id) })),
+  keepProviders: (known) =>
+    set((s) => (s.providerIds.every((id) => known.includes(id)) ? s : { providerIds: s.providerIds.filter((id) => known.includes(id)) })),
   setFrom: (from) => set({ from }),
   setTo: (to) => set({ to }),
   resetFilters: () =>

@@ -12,6 +12,12 @@ beforeEach(() => {
 })
 
 describe('preferences store', () => {
+  it('drops saved sources the server does not have', () => {
+    usePreferencesStore.setState({ providerIds: ['nyt', 'gone'] })
+    store().keepProviders(['nyt', 'guardian'])
+    expect(store().providerIds).toEqual(['nyt'])
+  })
+
   it('restores saved preferences', async () => {
     localStorage.setItem(
       KEY,
