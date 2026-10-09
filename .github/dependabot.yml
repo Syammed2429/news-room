@@ -13,6 +13,10 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    ignore:
+      # odd-numbered Node releases never become long-term support
+      - dependency-name: node
+        versions: ["25.x", "27.x"]
 
   - package-ecosystem: github-actions
     directory: /

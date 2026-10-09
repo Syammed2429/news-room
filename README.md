@@ -33,7 +33,7 @@ the browser and the news APIs so the API keys never reach the client.
 
 ## Running it
 
-You need Node 22 and pnpm 9 (`corepack enable` picks the right pnpm version).
+You need Node 24 and pnpm 9 (`corepack enable` picks the right pnpm version).
 
 Get a free key from each source (use as many as you like):
 

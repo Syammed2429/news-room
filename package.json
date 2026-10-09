@@ -6,14 +6,14 @@
   "version": "0.0.0",
   "type": "module",
   "engines": {
-    "node": ">=22.12"
+    "node": ">=24"
   },
   "scripts": {
     "dev": "concurrently -k -n api,web -c blue,green \"pnpm dev:server\" \"pnpm dev:web\"",
     "dev:web": "vite",
     "dev:server": "PORT=8787 tsx watch --tsconfig tsconfig.server.json --env-file-if-exists=.env server/index.ts",
     "build": "tsc -b && vite build && pnpm build:server",
-    "build:server": "esbuild server/index.ts --bundle --platform=node --format=esm --target=node22 --tsconfig=tsconfig.server.json --outfile=dist-server/index.js --banner:js=\"import{createRequire as __cr}from'module';const require=__cr(import.meta.url);\"",
+    "build:server": "esbuild server/index.ts --bundle --platform=node --format=esm --target=node24 --tsconfig=tsconfig.server.json --outfile=dist-server/index.js --banner:js=\"import{createRequire as __cr}from'module';const require=__cr(import.meta.url);\"",
     "start": "STATIC_DIR=./dist node --env-file-if-exists=.env dist-server/index.js",
     "lint": "oxlint",
     "test": "vitest run",
