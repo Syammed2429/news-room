@@ -202,6 +202,20 @@ describe('newsapi provider', () => {
     expect(lastUrl().searchParams.get('from')).toBe('2025-01-01')
   })
 
+  it('searches everything, not just the US headlines, when there is a keyword', async () => {
+    const { lastUrl } = stubFetch(payload)
+    await createNewsApiProvider('k').search({ ...base, query: 'climate' }, 1)
+    expect(lastUrl().pathname).toBe('/v2/everything')
+    expect(lastUrl().searchParams.get('q')).toBe('(climate)')
+  })
+
+  it('combines a keyword with a category as keywords on everything', async () => {
+    const { lastUrl } = stubFetch(payload)
+    await createNewsApiProvider('k').search({ ...base, query: 'ai', categories: ['technology'] }, 1)
+    expect(lastUrl().pathname).toBe('/v2/everything')
+    expect(lastUrl().searchParams.get('q')).toBe('(ai) AND ("technology")')
+  })
+
   it('falls back to keyword search for categories without a headlines equivalent', async () => {
     const { lastUrl } = stubFetch(payload)
     await createNewsApiProvider('k').search({ ...base, categories: ['politics'] }, 1)

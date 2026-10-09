@@ -81,13 +81,15 @@ interface PlannedRequest {
 
 // top-headlines can filter by category but not by date, and everything is the other way
 // round. So pick one per search, and fall back to keywords when a category has no match.
+// top-headlines only holds today's US headlines, so a keyword search there finds almost nothing
+// ("climate" gives 0 results, against thousands from everything). Keywords always use everything.
 const planRequests = (params: SearchParams): PlannedRequest[] => {
   const hasDates = Boolean(params.from || params.to)
   const hasCategoryWithoutHeadlines = params.categories.some((c) => !HEADLINE_CATEGORIES[c])
   const keywords = mapCategories(params.categories, CATEGORY_KEYWORDS)
   const headlineCategories = mapCategories(params.categories, HEADLINE_CATEGORIES)
 
-  if (hasDates || hasCategoryWithoutHeadlines) {
+  if (hasDates || hasCategoryWithoutHeadlines || params.query) {
     const q = [params.query && `(${params.query})`, orGroup(keywords)]
       .filter(Boolean)
       .join(' AND ')
