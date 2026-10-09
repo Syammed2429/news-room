@@ -2,7 +2,7 @@
 
 # build: compile the app and bundle the server into one file
 # the digest pins the exact base image, Dependabot opens a PR when it changes
-FROM node:24-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1 AS build
+FROM node:25-alpine@sha256:bdf2cca6fe3dabd014ea60163eca3f0f7015fbd5c7ee1b0e9ccb4ced6eb02ef4 AS build
 WORKDIR /app
 
 # corepack installs the pnpm version pinned in package.json
@@ -16,7 +16,7 @@ COPY . .
 RUN pnpm build
 
 # runtime: just the built output, no source, no node_modules, no keys
-FROM node:24-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1 AS runtime
+FROM node:25-alpine@sha256:bdf2cca6fe3dabd014ea60163eca3f0f7015fbd5c7ee1b0e9ccb4ced6eb02ef4 AS runtime
 ENV NODE_ENV=production \
     PORT=8080 \
     STATIC_DIR=./dist
