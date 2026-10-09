@@ -1,3 +1,4 @@
+import { Analytics } from '@vercel/analytics/react'
 import { BackToTop } from '@/components/BackToTop'
 import { LoadingBar } from '@/components/LoadingBar'
 import { Header } from '@/components/layout/Header'
@@ -74,6 +75,7 @@ const App = () => {
         </div>
       </main>
       <BackToTopSpacer />
+      <Analytics />
     </div>
   )
 }
