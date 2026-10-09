@@ -16,8 +16,12 @@ the browser and the news APIs so the API keys never reach the client.
 - A "For you" tab built from the sources, categories and authors you pick under Personalize. You can
   also follow an author straight from an article card. Choices are saved in `localStorage`.
   If you only follow authors, the feed shows only their articles. With categories as well, it
-  shows both, with the authors' articles first.
-- A "Saved" tab: bookmark any article to keep it on this device (the latest 50).
+  shows both, with the authors' articles first. The category chips, source list and dates work on
+  this tab too, but only narrow the feed: the chips list just your preferred categories, and the
+  source list just your preferred sources.
+- A "Saved" tab: bookmark any article to keep it on this device (the latest 50). The search box,
+  sources and dates filter the saved list on the device. There is no category filter here, because
+  a saved article has no reliable category to match on.
 - Infinite scroll with skeleton cards while the next page loads. The next page starts loading on
   the first scroll, and a thin bar shows while anything is loading.
 - A "new articles" button appears when something newer has been published (checked every 5 minutes
@@ -101,7 +105,9 @@ preferences, and the shared zod schemas validate the search box, the author inpu
 back out of `localStorage`.
 
 The code aims to stay simple: no `useEffect`, `useMemo` or `useCallback` in the app code (the
-exception is shadcn's generated calendar). Functions are `const` arrows, and TypeScript runs in
+exception is shadcn's generated calendar). The React Compiler is on, so components are memoized at
+build time instead of by hand. That means rendering has to stay pure, for example no reading the
+query cache while rendering. Functions are `const` arrows, and TypeScript runs in
 strict mode.
 
 ## Keeping the keys private
