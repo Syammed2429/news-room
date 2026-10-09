@@ -156,7 +156,12 @@ Husky runs these:
 - NewsAPI keyword searches use its `everything` endpoint. Its `top-headlines` endpoint only holds
   today's US headlines and finds almost nothing for a keyword. Browsing without a keyword still
   uses top-headlines.
-- NewsAPI's free plan only returns the first 100 results and delays them. It also allows only 100
+- A search for several words needs all of them on the Guardian and NewsAPI. NYT's search matches
+  any of the words and ignores AND and +, but a phrase in quotes is matched exactly.
+- NewsAPI's free plan only returns the first 100 results and delays them by 24 hours, only goes
+  back about a month, and is meant for development and testing only (its terms don't allow staging
+  or production use). A date range further back than a month shows "The free plan does not reach
+  back that far" for NewsAPI while the other sources still answer. It also allows only 100
   requests a day, so after a lot of use it answers "rate limit reached". The app shows that as a
   notice and keeps going with the other sources. The cache (5 minutes) is what keeps normal use well
   inside the limit.
