@@ -26,7 +26,7 @@ describe('fetchJson', () => {
     [401, 'The API key was rejected'],
     [403, 'The API key was rejected'],
     [429, 'Rate limit reached, try again shortly'],
-    [426, 'Free plan result limit reached'],
+    [426, 'The free plan does not reach back that far'],
     [500, 'Source responded with an error (500)'],
   ])('describes a %i in words written for readers', async (status, message) => {
     stub(async () => new Response('{}', { status }))
@@ -34,6 +34,16 @@ describe('fetchJson', () => {
     expect(error).toBeInstanceOf(UpstreamError)
     expect((error as UpstreamError).message).toBe(message)
     expect((error as UpstreamError).status).toBe(status)
+  })
+
+  it('tells the two kinds of 426 apart by the error code, and ignores the message text', async () => {
+    stub(async () => Response.json({ code: 'maximumResultsReached', message: 'secret details' }, { status: 426 }))
+    const limit = (await fetchJson('https://api.example/x').catch((e: unknown) => e)) as UpstreamError
+    expect(limit.message).toBe('Free plan result limit reached')
+
+    stub(async () => Response.json({ code: 'parameterInvalid', message: 'secret details' }, { status: 426 }))
+    const tooOld = (await fetchJson('https://api.example/x').catch((e: unknown) => e)) as UpstreamError
+    expect(tooOld.message).toBe('The free plan does not reach back that far')
   })
 
   it('reports an unreachable source without naming it', async () => {

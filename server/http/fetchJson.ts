@@ -11,11 +11,26 @@ export class UpstreamError extends Error {
 
 const TIMEOUT_MS = 8_000
 
-const describeStatus = (status: number): string => {
+// NewsAPI answers 426 for two different limits, and tells them apart with a short error code
+const describeStatus = (status: number, code?: string): string => {
   if (status === 401 || status === 403) return 'The API key was rejected'
   if (status === 429) return 'Rate limit reached, try again shortly'
-  if (status === 426) return 'Free plan result limit reached'
+  if (status === 426) {
+    return code === 'maximumResultsReached'
+      ? 'Free plan result limit reached'
+      : 'The free plan does not reach back that far'
+  }
   return `Source responded with an error (${status})`
+}
+
+// Only the short code is read, never the message text, so nothing unexpected reaches readers.
+const errorCode = async (response: Response): Promise<string | undefined> => {
+  try {
+    const body = (await response.json()) as { code?: unknown }
+    return typeof body.code === 'string' ? body.code : undefined
+  } catch {
+    return undefined
+  }
 }
 
 interface Options {
@@ -40,7 +55,7 @@ export const fetchJson = async <T>(url: string, { headers, signal }: Options = {
     throw new UpstreamError(502, 'Source could not be reached')
   }
 
-  if (!response.ok) throw new UpstreamError(response.status, describeStatus(response.status))
+  if (!response.ok) throw new UpstreamError(response.status, describeStatus(response.status, await errorCode(response)))
 
   try {
     return (await response.json()) as T
