@@ -66,6 +66,9 @@ export const createApp = ({ aggregator, demo, trustProxy, rateLimit: limits, sta
     app.use('*', serveStatic({ root: staticDir }))
     // a missing hashed file must 404, otherwise the HTML would be cached as if it were that file
     app.all('/assets/*', (c) => c.text('Not found', 404))
+    // Vercel Web Analytics asks for a script that only exists on Vercel. A 404 stops the page
+    // being handed back as if it were that script.
+    app.all('/_vercel/*', (c) => c.text('Not found', 404))
     // unknown paths get the app
     app.get('*', serveStatic({ path: `${staticDir}/index.html` }))
   }

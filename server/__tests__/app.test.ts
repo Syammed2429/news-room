@@ -285,6 +285,12 @@ describe('serving the built app', () => {
     expect(response.headers.get('cache-control') ?? '').not.toContain('immutable')
   })
 
+  it('404s the Vercel analytics script instead of answering with the app page', async () => {
+    const response = await withStatic().request('/_vercel/insights/script.js')
+    expect(response.status).toBe(404)
+    expect(response.headers.get('content-type')).not.toContain('text/html')
+  })
+
   it('does not expose files outside the build folder', async () => {
     const response = await withStatic().request('/..%2fpackage.json')
     expect(await response.text()).not.toContain('"name": "news-aggregator"')
