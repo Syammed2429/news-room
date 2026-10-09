@@ -28,12 +28,16 @@ export const DatePickerField = ({ label, value, onChange, disabled }: Props) => 
 
   return (
     <div className="flex min-w-0 flex-col gap-1.5">
-      <Label htmlFor={id}>{label}</Label>
+      <Label id={`${id}-label`} htmlFor={id}>
+        {label}
+      </Label>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger
           render={
             <Button
               id={id}
+              // the label alone would hide the chosen date from a screen reader
+              aria-labelledby={`${id}-label ${id}`}
               variant="outline"
               className={cn('w-full justify-start px-2.5 font-normal', !selected && 'text-muted-foreground')}
             />
