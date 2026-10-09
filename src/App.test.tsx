@@ -452,11 +452,61 @@ describe('App', () => {
       expect(screen.getByRole('tab', { name: /latest/i })).toHaveAttribute('aria-selected', 'true')
     })
 
-    it('hides the search box, which only applies to news', async () => {
-      const user = userEvent.setup()
+    it('filters the saved list by keyword on this device, and says how many match', async () => {
+      useSavedStore.setState({ articles: FIXTURE.slice(0, 2) })
+      useSearchStore.setState({ view: 'saved', query: 'galaxy', draft: 'galaxy' })
       renderApp()
-      await user.click(screen.getByRole('tab', { name: /saved/i }))
-      expect(screen.queryByRole('textbox', { name: /search articles/i })).not.toBeInTheDocument()
+
+      expect(await screen.findAllByRole('article')).toHaveLength(1)
+      expect(screen.getByText(/1 of 2 saved articles/i)).toBeInTheDocument()
+      expect(screen.getByRole('textbox', { name: /search articles/i })).toHaveValue('galaxy')
+    })
+
+    it('offers a way out when no saved article matches the filters', async () => {
+      const user = userEvent.setup()
+      useSavedStore.setState({ articles: FIXTURE.slice(0, 1) })
+      useSearchStore.setState({ view: 'saved', from: '2030-01-01' })
+      renderApp()
+
+      expect(await screen.findByText(/no articles found/i)).toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: /clear search and filters/i }))
+      expect(await screen.findAllByRole('article')).toHaveLength(1)
+    })
+  })
+
+  describe('filters on the For you tab', () => {
+    it('only offers the categories from the preferences', async () => {
+      usePreferencesStore.setState({ providerIds: [], categories: ['science', 'health'], authors: [] })
+      useSearchStore.setState({ view: 'feed' })
+      renderApp()
+      await screen.findAllByRole('article')
+
+      const chips = within(screen.getByRole('navigation', { name: 'Categories' }))
+      expect(chips.getAllByRole('button').map((b) => b.textContent)).toEqual(['All', 'Science', 'Health'])
+    })
+
+    it('narrows the request to the picked category instead of widening it', async () => {
+      const user = userEvent.setup()
+      usePreferencesStore.setState({ providerIds: [], categories: ['science', 'health'], authors: [] })
+      useSearchStore.setState({ view: 'feed' })
+      renderApp()
+      await screen.findAllByRole('article')
+      fakeBackend.mockClear()
+
+      await user.click(within(screen.getByRole('navigation', { name: 'Categories' })).getByRole('button', { name: 'Health' }))
+      await waitFor(() => expect(fakeBackend).toHaveBeenCalled())
+
+      const body = JSON.parse(String(fakeBackend.mock.calls.find(([url]) => url.endsWith('/search'))?.[1]?.body)) as NewsSearchBody
+      expect(body.request.queries[0]?.categories).toEqual(['health'])
+    })
+
+    it('shows the category chips on a feed with no category preferences', async () => {
+      usePreferencesStore.setState({ providerIds: [], categories: [], authors: ['Maya Chen'] })
+      useSearchStore.setState({ view: 'feed' })
+      renderApp()
+      await screen.findAllByRole('article')
+      const chips = within(screen.getByRole('navigation', { name: 'Categories' }))
+      expect(chips.getAllByRole('button')).toHaveLength(9)
     })
   })
 

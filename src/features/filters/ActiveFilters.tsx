@@ -1,6 +1,7 @@
 import { format, parseISO } from 'date-fns'
 import { XIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useSourceFilter } from '@/hooks/useSourceFilter'
 import { useSources } from '@/hooks/useSources'
 import { useSearchStore } from '@/store/search'
 
@@ -27,7 +28,8 @@ const formatDay = (iso: string) => format(parseISO(iso), 'd MMM yyyy')
 
 // chips for the filters that are on, each one removable
 export const ActiveFilters = () => {
-  const { providerIds, from, to } = useSearchStore()
+  const { from, to } = useSearchStore()
+  const { selected: providerIds } = useSourceFilter()
   const { toggleProvider, setFrom, setTo, resetFilters } = useSearchStore.getState()
   const { sources } = useSources()
 

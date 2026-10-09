@@ -18,7 +18,7 @@ export const useNewsFeed = () => {
   const preferences = { providerIds: preferredProviders, categories, authors }
   const request =
     view === 'feed'
-      ? buildFeedRequest(preferences, { query, sort, from, to })
+      ? buildFeedRequest(preferences, { query, category, providerIds, sort, from, to })
       : buildLatestRequest({ query, category, providerIds, sort, from, to })
 
   const needsPreferences = view === 'feed' && !hasPreferences(preferences)

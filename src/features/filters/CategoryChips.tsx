@@ -1,10 +1,19 @@
 import { Chip } from '@/components/Chip'
+import { withinCategories } from '@/lib/filters'
+import { usePreferencesStore } from '@/store/preferences'
 import { useSearchStore } from '@/store/search'
 import { CATEGORIES, CATEGORY_LABELS } from '@shared/news'
 
 export const CategoryChips = () => {
-  const category = useSearchStore((s) => s.category)
+  const view = useSearchStore((s) => s.view)
+  const chosen = useSearchStore((s) => s.category)
   const setCategory = useSearchStore((s) => s.setCategory)
+  const preferred = usePreferencesStore((s) => s.categories)
+
+  // On "For you" the chips narrow the preferred categories, so those are the only ones offered
+  const only = view === 'feed' ? preferred : []
+  const offered = only.length > 0 ? CATEGORIES.filter((item) => only.includes(item)) : CATEGORIES
+  const category = withinCategories(chosen, only)
 
   return (
     <nav
@@ -18,7 +27,7 @@ export const CategoryChips = () => {
             All
           </Chip>
         </li>
-        {CATEGORIES.map((item) => (
+        {offered.map((item) => (
           <li key={item}>
             <Chip pressed={category === item} onClick={() => setCategory(category === item ? null : item)}>
               {CATEGORY_LABELS[item]}

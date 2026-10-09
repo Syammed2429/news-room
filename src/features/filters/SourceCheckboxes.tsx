@@ -5,11 +5,14 @@ import type { ProviderId } from '@shared/news'
 
 interface Props {
   selected: ProviderId[]
+  // offer only these sources, empty means all of them
+  only?: ProviderId[]
   onToggle: (id: ProviderId) => void
 }
 
-export const SourceCheckboxes = ({ selected, onToggle }: Props) => {
-  const { sources, isLoading } = useSources()
+export const SourceCheckboxes = ({ selected, only = [], onToggle }: Props) => {
+  const { sources: all, isLoading } = useSources()
+  const sources = only.length > 0 ? all.filter(({ id }) => only.includes(id)) : all
 
   if (isLoading) {
     return (

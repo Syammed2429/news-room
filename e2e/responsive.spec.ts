@@ -26,4 +26,15 @@ test.describe('on a phone', () => {
     const { violations } = await new AxeBuilder({ page }).withRules(['target-size']).analyze()
     expect(violations.flatMap((v) => v.nodes.map((n) => n.target.join(' ')))).toEqual([])
   })
+
+  test('still fits on the narrowest phones, with filters on and the tabs on one row', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 700 })
+    await openHome(page, '/?category=science&sources=demo-wire&from=2026-09-01')
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
+    expect(overflow).toBeLessThanOrEqual(1)
+
+    // the Filters button stays inside the screen instead of being pushed off the right edge
+    const box = await page.getByRole('button', { name: /^Filters/ }).boundingBox()
+    expect((box?.x ?? 0) + (box?.width ?? 0)).toBeLessThanOrEqual(320)
+  })
 })

@@ -49,11 +49,11 @@ const App = () => {
               Showing sample articles. Add API keys on the server (see the README) to load live news.
             </Banner>
           )}
-          {view !== 'saved' && <SearchBar />}
+          <SearchBar />
           {view !== 'saved' && <RecentSearches />}
           {/* Stays in view while scrolling so the reader can switch topic at any depth. */}
           <div className="sticky top-14 z-20 -mx-4 flex flex-col gap-3 bg-background/90 px-4 py-3 backdrop-blur lg:mx-0 lg:px-0">
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
               <Tabs value={view} onValueChange={(next) => setView(next as FeedView)}>
                 <TabsList>
                   <TabsTrigger value="latest">Latest</TabsTrigger>
@@ -64,12 +64,12 @@ const App = () => {
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
-              {view !== 'saved' && <MobileFilters />}
+              <MobileFilters />
             </div>
-            {view === 'latest' && <CategoryChips />}
+            {view !== 'saved' && <CategoryChips />}
             <LoadingBar />
           </div>
-          {view === 'latest' && <ActiveFilters />}
+          <ActiveFilters />
           <ResultsView />
         </div>
       </main>

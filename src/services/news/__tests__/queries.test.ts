@@ -23,7 +23,7 @@ describe('buildLatestRequest', () => {
 })
 
 describe('buildFeedRequest', () => {
-  const search = { query: 'x', sort: 'newest' as const, from: undefined, to: undefined }
+  const search = { query: 'x', category: null, providerIds: [], sort: 'newest' as const, from: undefined, to: undefined }
 
   it('uses one query when there are no preferred authors', () => {
     const request = buildFeedRequest({ providerIds: ['nyt'], categories: ['science'], authors: [] }, search)
@@ -43,7 +43,7 @@ describe('buildFeedRequest', () => {
 })
 
 describe('buildFeedRequest with partial preferences', () => {
-  const search = { query: '', sort: 'newest' as const, from: undefined, to: undefined }
+  const search = { query: '', category: null, providerIds: [], sort: 'newest' as const, from: undefined, to: undefined }
 
   it('asks only for the chosen authors when nothing else is picked', () => {
     const request = buildFeedRequest({ providerIds: [], categories: [], authors: ['Jane Doe'] }, search)
@@ -54,6 +54,42 @@ describe('buildFeedRequest with partial preferences', () => {
     const request = buildFeedRequest({ providerIds: ['nyt'], categories: [], authors: [] }, search)
     expect(request.queries).toHaveLength(1)
     expect(request.queries[0]).toMatchObject({ categories: [], authors: [] })
+  })
+})
+
+describe('buildFeedRequest with filters picked on the feed', () => {
+  const base = { query: '', sort: 'newest' as const, from: undefined, to: undefined }
+  const prefs = { providerIds: ['guardian', 'nyt'], categories: ['science' as const, 'health' as const], authors: [] }
+
+  it('narrows the preferred categories to the one picked', () => {
+    const request = buildFeedRequest(prefs, { ...base, category: 'health', providerIds: [] })
+    expect(request.queries[0]).toMatchObject({ categories: ['health'] })
+  })
+
+  it('ignores a category the preferences do not include', () => {
+    const request = buildFeedRequest(prefs, { ...base, category: 'sports', providerIds: [] })
+    expect(request.queries[0]).toMatchObject({ categories: ['science', 'health'] })
+  })
+
+  it('narrows the preferred sources, and ignores ones that are not preferred', () => {
+    expect(buildFeedRequest(prefs, { ...base, category: null, providerIds: ['nyt'] }).providerIds).toEqual(['nyt'])
+    expect(buildFeedRequest(prefs, { ...base, category: null, providerIds: ['newsapi'] }).providerIds).toEqual([
+      'guardian',
+      'nyt',
+    ])
+  })
+
+  it('uses any picked source when no sources are preferred', () => {
+    const request = buildFeedRequest({ ...prefs, providerIds: [] }, { ...base, category: null, providerIds: ['nyt'] })
+    expect(request.providerIds).toEqual(['nyt'])
+  })
+
+  it('applies the category to the author query too', () => {
+    const request = buildFeedRequest(
+      { providerIds: [], categories: [], authors: ['Jane Doe'] },
+      { ...base, category: 'science', providerIds: [] },
+    )
+    expect(request.queries).toEqual([expect.objectContaining({ categories: ['science'], authors: ['Jane Doe'] })])
   })
 })
 
@@ -80,7 +116,7 @@ describe('sort in a request', () => {
   it('applies to every query in the feed', () => {
     const request = buildFeedRequest(
       { providerIds: [], categories: ['science'], authors: ['Jane Doe'] },
-      { query: 'ai', sort: 'relevance', from: undefined, to: undefined },
+      { query: 'ai', category: null, providerIds: [], sort: 'relevance', from: undefined, to: undefined },
     )
     expect(request.queries.map((q) => q.sort)).toEqual(['relevance', 'relevance'])
   })

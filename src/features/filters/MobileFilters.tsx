@@ -8,18 +8,21 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet'
+import { useSourceFilter } from '@/hooks/useSourceFilter'
 import { useSearchStore } from '@/store/search'
 import { FilterPanel } from './FilterPanel'
 
 export const MobileFilters = () => {
-  const { providerIds, from, to } = useSearchStore()
-  const active = [from, to].filter(Boolean).length + providerIds.length
+  const { from, to } = useSearchStore()
+  const { selected } = useSourceFilter()
+  const active = [from, to].filter(Boolean).length + selected.length
 
   return (
     <Sheet>
       <SheetTrigger render={<Button variant="outline" className="lg:hidden" />}>
         <FilterIcon />
-        Filters
+        {/* only the icon fits next to the tabs on the narrowest phones */}
+        <span className="max-[26rem]:sr-only">Filters</span>
         {active > 0 && (
           <span className="ml-0.5 rounded-full bg-primary px-1.5 text-xs text-primary-foreground">{active}</span>
         )}

@@ -76,4 +76,54 @@ test.describe('filters', () => {
     await expect(sidebar(page).getByRole('button', { name: 'From 01 Sep 2026' })).toBeVisible()
     await expect(sidebar(page).getByRole('button', { name: 'To Any date' })).toBeVisible()
   })
+
+  test('For you: only the preferred categories and sources are offered, and picking one narrows the feed', async ({
+    page,
+  }) => {
+    await page.addInitScript(() =>
+      localStorage.setItem(
+        'news-preferences',
+        JSON.stringify({
+          state: { providerIds: ['demo-wire', 'demo-times'], categories: ['science', 'health'], authors: [] },
+          version: 1,
+        }),
+      ),
+    )
+    await openHome(page, '/?view=feed')
+
+    const chips = page.getByRole('navigation', { name: 'Categories' }).getByRole('button')
+    await expect(chips).toHaveText(['All', 'Science', 'Health'])
+    await expect(sidebar(page).getByRole('checkbox')).toHaveCount(2)
+    await expect(sidebar(page).getByRole('checkbox', { name: 'Demo Daily' })).toHaveCount(0)
+
+    await category(page, 'Health').click()
+    await sidebar(page).getByRole('checkbox', { name: 'Demo Times' }).check()
+    await expect
+      .poll(async () => {
+        const all = await cards(page).allTextContents()
+        return all.length > 0 && all.every((t) => t.includes('Health') && t.includes('Demo Times'))
+      })
+      .toBe(true)
+  })
+
+  test('Saved: search, source and date filter the saved list on this device', async ({ page }) => {
+    await openHome(page)
+    const titles: string[] = []
+    for (const index of [0, 1]) {
+      const card = cards(page).nth(index)
+      titles.push(((await card.getByRole('heading', { level: 2 }).textContent()) ?? '').replace(/\(opens in a new tab\)/, '').trim())
+      await card.getByRole('button', { name: /^Save for later/ }).click()
+    }
+    await page.getByRole('tab', { name: /Saved/ }).click()
+    await expect(cards(page)).toHaveCount(2)
+
+    await searchBox(page).fill(titles[0] ?? '')
+    await expect(cards(page)).toHaveCount(1)
+    await expect(page.getByText(/1 of 2 saved articles/)).toBeVisible()
+
+    await sidebar(page).getByRole('checkbox', { name: 'Demo Daily' }).check()
+    await expect(page.getByText('No articles found')).toBeVisible()
+    await page.getByRole('button', { name: 'Clear search and filters' }).click()
+    await expect(cards(page)).toHaveCount(2)
+  })
 })
