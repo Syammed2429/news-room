@@ -279,6 +279,12 @@ describe('serving the built app', () => {
     expect(await api.json()).toEqual({ error: 'Not found' })
   })
 
+  it('404s a missing asset instead of caching the app page as that file', async () => {
+    const response = await withStatic().request('/assets/old-hash.js')
+    expect(response.status).toBe(404)
+    expect(response.headers.get('cache-control') ?? '').not.toContain('immutable')
+  })
+
   it('does not expose files outside the build folder', async () => {
     const response = await withStatic().request('/..%2fpackage.json')
     expect(await response.text()).not.toContain('"name": "news-aggregator"')
