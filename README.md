@@ -69,10 +69,12 @@ Other scripts: `pnpm test`, `pnpm test:e2e`, `pnpm lint`, `pnpm typecheck`, `pnp
 
 Vercel has no long-running server, so it hosts the built pages itself and answers `/api` with one
 serverless function for each of the two routes, `api/news/search.js` and `api/news/sources.js`.
-Both are the same Hono app as `server/`, bundled into single files by `pnpm build:vercel`, and
-they are committed on purpose. Files are used rather than one catch-all because Vercel only does
-catch-all routing for Next.js. `pnpm build` rebuilds them, and CI fails if the committed copies
-are out of date.
+Both re-export `api/_server.js`, which is the same Hono app as `server/` bundled and minified by
+`pnpm build:vercel`. The bundle is plain JavaScript and committed on purpose: Vercel's own
+TypeScript build emits imports Node's ESM mode can't resolve, and it only looks for functions
+before the build command runs, so they can't be generated during the deploy. There are two route
+files because Vercel only does catch-all routing for Next.js. `pnpm build` rebuilds the bundle,
+and CI fails if the committed copy is out of date.
 
 1. Import the repo in Vercel (it detects Vite).
 2. Under Settings → Environment Variables add `GUARDIAN_API_KEY`, `NYT_API_KEY` and
