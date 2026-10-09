@@ -38,8 +38,9 @@ export const useNewsFeed = () => {
   const { newCount, showNew } = useNewArticles({
     request,
     articles,
-    // only the news tabs have anything to check
-    enabled: !needsPreferences && view !== 'saved',
+    // only the news tabs have anything to check, and only once this request has loaded its own
+    // first page (until then the list on screen still belongs to the previous search)
+    enabled: !needsPreferences && view !== 'saved' && result.isSuccess && !result.isPlaceholderData,
   })
 
   return {

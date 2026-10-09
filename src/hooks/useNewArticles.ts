@@ -11,15 +11,14 @@ interface Options {
   request: NewsRequest
   // what is on screen now
   articles: Article[]
+  // false while the list on screen still belongs to a previous search (or has no page yet),
+  // so there is nothing of this request's own to compare against
   enabled: boolean
 }
 
 // Quietly checks whether anything newer than what is on screen has been published.
 export const useNewArticles = ({ request, articles, enabled }: Options) => {
   const client = useQueryClient()
-  // While a new search is still loading, the list on screen belongs to the previous one,
-  // so wait until this request has its own first page to compare against.
-  const hasOwnPage = client.getQueryData(['articles', request]) !== undefined
 
   const fresh = useQuery({
     queryKey: ['fresh', request],
@@ -31,7 +30,7 @@ export const useNewArticles = ({ request, articles, enabled }: Options) => {
       if (firstPage && Date.now() - main.dataUpdatedAt < NEW_ARTICLES_POLL_MS - 1000) return firstPage
       return newsClient.search(request, FIRST_PAGE, signal)
     },
-    enabled: enabled && hasOwnPage,
+    enabled,
     staleTime: NEW_ARTICLES_POLL_MS,
     refetchInterval: NEW_ARTICLES_POLL_MS,
     // no point checking while nobody is looking at the tab

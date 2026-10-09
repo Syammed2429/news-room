@@ -1,12 +1,14 @@
 /// <reference types="vitest/config" />
 import tailwindcss from '@tailwindcss/vite'
-import react from '@vitejs/plugin-react'
+import babel from '@rolldown/plugin-babel'
+import react, { reactCompilerPreset } from '@vitejs/plugin-react'
 import path from 'node:path'
 import { defineConfig } from 'vite'
 
 // the browser only calls our own /api, the keys stay on the server
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  // the React Compiler memoizes components for us, so no useMemo or useCallback is needed
+  plugins: [react(), babel({ presets: [reactCompilerPreset()] }), tailwindcss()],
   resolve: {
     alias: {
       '@': path.resolve(import.meta.dirname, 'src'),
