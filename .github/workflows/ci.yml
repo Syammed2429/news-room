@@ -78,7 +78,7 @@ jobs:
       # builds the app and starts it with no API keys, so the tests use the sample articles
       - run: pnpm test:e2e
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: failure()
         with:
           name: playwright-report
