@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { htmlToText, quoted, safeImageUrl, safeUrl, searchText, stripByline } from '../text'
+import { allTerms, htmlToText, quoted, safeImageUrl, safeUrl, searchText, stripByline } from '../text'
 
 describe('htmlToText', () => {
   it('strips tags and decodes entities', () => {
@@ -70,5 +70,22 @@ describe('searchText', () => {
     expect(searchText('🔥')).toBe('')
     expect(searchText('   ')).toBe('')
     expect(searchText(':[]')).toBe('')
+  })
+})
+
+describe('allTerms', () => {
+  it('puts AND between plain words', () => {
+    expect(allTerms('climate change')).toBe('climate AND change')
+    expect(allTerms('climate')).toBe('climate')
+  })
+
+  it('keeps a quoted phrase together', () => {
+    expect(allTerms('"climate change" policy')).toBe('"climate change" AND policy')
+  })
+
+  it('leaves AND, OR and NOT that the reader typed alone', () => {
+    expect(allTerms('climate OR weather')).toBe('climate OR weather')
+    expect(allTerms('climate NOT war')).toBe('climate NOT war')
+    expect(allTerms('a b OR c d')).toBe('a AND b OR c AND d')
   })
 })

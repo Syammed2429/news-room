@@ -48,3 +48,19 @@ export const searchText = (raw: string): string => {
   const text = (kept.match(/"/g)?.length ?? 0) % 2 === 0 ? kept : kept.replaceAll('"', ' ')
   return text.replace(/\s+/g, ' ').trim()
 }
+
+const OPERATORS = new Set(['AND', 'OR', 'NOT'])
+
+// Splits into words and "quoted phrases". Cleaned search text has paired quotes, so this is safe.
+const terms = (text: string): string[] => text.match(/"[^"]*"|\S+/g) ?? []
+
+// The Guardian treats a plain "climate change" as climate OR change, which matches almost
+// everything. Put AND between the words, but leave AND, OR and NOT the reader typed as they are.
+export const allTerms = (text: string): string =>
+  terms(text)
+    .flatMap((term, index, all) => {
+      const previous = all[index - 1]
+      const needsAnd = previous !== undefined && !OPERATORS.has(previous) && !OPERATORS.has(term)
+      return needsAnd ? ['AND', term] : [term]
+    })
+    .join(' ')

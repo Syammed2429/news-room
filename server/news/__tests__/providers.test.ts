@@ -81,6 +81,12 @@ describe('guardian provider', () => {
     expect(params.get('page')).toBe('2')
     expect(params.get('api-key')).toBe('k')
   })
+
+  it('asks for every word, because the Guardian would otherwise match any one of them', async () => {
+    const { lastUrl } = stubFetch(payload)
+    await createGuardianProvider('k').search({ query: 'climate change', categories: [], authors: [] }, 1)
+    expect(lastUrl().searchParams.get('q')).toBe('(climate AND change)')
+  })
 })
 
 describe('nyt provider', () => {

@@ -2,7 +2,7 @@ import type { Article, NewsProvider, SearchParams } from '@shared/news'
 import { buildUrl, fetchJson } from '../../http/fetchJson'
 import { mapCategories } from '../categories'
 import { PAGE_SIZE } from '../constants'
-import { htmlToText, quotedList, safeImageUrl, safeUrl } from '../text'
+import { allTerms, htmlToText, quotedList, safeImageUrl, safeUrl } from '../text'
 
 const ENDPOINT = 'https://content.guardianapis.com/search'
 
@@ -57,7 +57,7 @@ const toArticle = (item: GuardianResult): Article | undefined => {
 // no author filter in this API, so names go into the search text
 const buildQuery = ({ query, authors }: SearchParams): string | undefined => {
   const parts = [
-    query && `(${query})`,
+    query && `(${allTerms(query)})`,
     authors.length > 0 && `(${quotedList(authors, ' OR ')})`,
   ]
   return parts.filter(Boolean).join(' AND ') || undefined
