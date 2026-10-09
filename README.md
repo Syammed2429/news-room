@@ -191,4 +191,3 @@ Husky runs these:
   236 MB, and the app works in it under the strict CSP. The Docker build only runs on x86 in CI.
 - Saved articles, preferences and recent searches live in `localStorage`, so they stay on one
   device and browser. There are no accounts.
-- The project is marked `UNLICENSED` in `package.json`. Pick a licence before sharing it publicly.
