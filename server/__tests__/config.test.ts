@@ -25,4 +25,8 @@ describe('loadConfig', () => {
     expect(loadConfig({ TRUST_PROXY: 'true' }).trustProxy).toBe(true)
     expect(loadConfig({ TRUST_PROXY: 'yes' }).trustProxy).toBe(false)
   })
+
+  it('trusts the proxy on Vercel, where every request comes through it', () => {
+    expect(loadConfig({ VERCEL: '1' }).trustProxy).toBe(true)
+  })
 })

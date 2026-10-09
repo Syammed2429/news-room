@@ -1,6 +1,6 @@
 import type { ApiKeys } from './news/providers'
 
-interface AppConfig {
+export interface AppConfig {
   port: number
   // only turn on behind a proxy you run, X-Forwarded-For can be faked
   trustProxy: boolean
@@ -20,7 +20,8 @@ const toInt = (value: string | undefined, fallback: number): number => {
 
 export const loadConfig = (env: NodeJS.ProcessEnv = process.env): AppConfig => ({
   port: toInt(env['PORT'], 8787),
-  trustProxy: env['TRUST_PROXY'] === 'true',
+  // Vercel always sits in front of the function, and it sets the real client address
+  trustProxy: env['TRUST_PROXY'] === 'true' || env['VERCEL'] === '1',
   staticDir: clean(env['STATIC_DIR']),
   keys: {
     guardian: clean(env['GUARDIAN_API_KEY']),

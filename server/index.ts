@@ -1,22 +1,7 @@
 import { serve } from '@hono/node-server'
-import { createApp } from './app'
-import { loadConfig } from './config'
-import { createNewsAggregator } from './news/aggregator'
-import { cacheProviders, createDemoProviders, createProviders } from './news/providers'
+import { bootstrap } from './bootstrap'
 
-const config = loadConfig()
-
-const live = createProviders(config.keys)
-const demo = live.length === 0
-const providers = cacheProviders(demo ? createDemoProviders() : live, config.cache)
-
-const app = createApp({
-  aggregator: createNewsAggregator(providers),
-  demo,
-  trustProxy: config.trustProxy,
-  rateLimit: config.rateLimit,
-  staticDir: config.staticDir,
-})
+const { app, providers, demo, config } = bootstrap()
 
 const server = serve({ fetch: app.fetch, port: config.port }, ({ port }) => {
   // log the source names, never the keys
