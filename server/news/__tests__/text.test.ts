@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { htmlToText, quoted, safeImageUrl, safeUrl, stripByline } from '../text'
+import { htmlToText, quoted, safeImageUrl, safeUrl, searchText, stripByline } from '../text'
 
 describe('htmlToText', () => {
   it('strips tags and decodes entities', () => {
@@ -43,5 +43,32 @@ describe('safeUrl', () => {
 describe('quoted', () => {
   it('stops user text breaking out of a quoted search term', () => {
     expect(quoted('Jane "The Pen" Doe')).toBe('"Jane The Pen Doe"')
+  })
+})
+
+describe('searchText', () => {
+  it('leaves ordinary searches alone', () => {
+    expect(searchText('climate change')).toBe('climate change')
+    expect(searchText("don't AT&T COVID-19 café 日本")).toBe("don't AT&T COVID-19 café 日本")
+  })
+
+  it('keeps paired quotes so exact-phrase search works, and drops a lone one', () => {
+    expect(searchText('"climate change"')).toBe('"climate change"')
+    expect(searchText('"climate')).toBe('climate')
+  })
+
+  it.each([
+    ['Trump: tariffs', 'Trump tariffs'],
+    ['[a]', 'a'],
+    ['(x) {y} \\z ^ ~', 'x y z'],
+    ['why? #metoo 50%', 'why metoo 50'],
+  ])('drops characters the APIs read as syntax: %s', (input, expected) => {
+    expect(searchText(input)).toBe(expected)
+  })
+
+  it('is empty when nothing searchable is left', () => {
+    expect(searchText('🔥')).toBe('')
+    expect(searchText('   ')).toBe('')
+    expect(searchText(':[]')).toBe('')
   })
 })

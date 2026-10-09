@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 // @vitest-environment node
 import type { NewsRequest } from '@shared/api'
 import type { Article, NewsProvider, ProviderPage, SearchParams } from '@shared/news'
@@ -28,6 +28,26 @@ const request = (overrides: Partial<NewsRequest> = {}): NewsRequest => ({
 })
 
 describe('createNewsAggregator', () => {
+  it('cleans the search text before any source sees it', async () => {
+    const seen: string[] = []
+    const aggregator = createNewsAggregator([
+      provider('a', async (p) => {
+        seen.push(p.query)
+        return page([article('x')])
+      }),
+    ])
+    await aggregator.search(request({ queries: [{ ...params, query: 'Trump: "tariffs' }] }), FIRST_PAGE)
+    expect(seen).toEqual(['Trump tariffs'])
+  })
+
+  it('finds nothing, and asks no source, when the search has nothing left to search for', async () => {
+    const search = vi.fn(async () => page([article('x')]))
+    const aggregator = createNewsAggregator([provider('a', search)])
+    const result = await aggregator.search(request({ queries: [{ ...params, query: '🔥' }] }), FIRST_PAGE)
+    expect(result.articles).toEqual([])
+    expect(search).not.toHaveBeenCalled()
+  })
+
   it('merges providers newest first', async () => {
     const aggregator = createNewsAggregator([
       provider('a', async () => page([article('old', { publishedAt: '2025-01-01T00:00:00Z' })])),

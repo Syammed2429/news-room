@@ -39,3 +39,12 @@ export const quoted = (value: string): string => `"${value.replaceAll('"', '')}"
 
 export const quotedList = (values: readonly string[], separator: string): string =>
   values.map(quoted).join(separator)
+
+// People type anything into a search box, but the news APIs read some characters as syntax: a lone
+// quote, a colon or square brackets make the Guardian answer 400. Keep letters, digits and a few
+// harmless marks. Quotes only stay when they pair up, so searching for an exact phrase still works.
+export const searchText = (raw: string): string => {
+  const kept = raw.replace(/[^\p{L}\p{N}\s'"&.,-]/gu, ' ')
+  const text = (kept.match(/"/g)?.length ?? 0) % 2 === 0 ? kept : kept.replaceAll('"', ' ')
+  return text.replace(/\s+/g, ' ').trim()
+}

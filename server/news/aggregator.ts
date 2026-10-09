@@ -3,6 +3,7 @@ import { matchesAuthor } from '@shared/authors'
 import type { Article, NewsProvider, ProviderFailure, ProviderId } from '@shared/news'
 import { MAX_PAGE, type AggregatedPage, type PageCursor } from '@shared/pagination'
 import { UpstreamError } from '../http/fetchJson'
+import { searchText } from './text'
 
 const byNewest = (a: Article, b: Article) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt)
 
@@ -46,8 +47,13 @@ export const createNewsAggregator = (providers: readonly NewsProvider[]): NewsAg
     // authors the reader follows, in any of the queries
     const followed = queries.flatMap((query) => query.authors)
 
+    // The text is cleaned once here for every source. A search made only of characters that
+    // can't be searched (an emoji, say) finds nothing, rather than turning into "show everything".
     const jobs = active.flatMap((provider) =>
-      queries.map((params, index) => ({ provider, params, key: `${provider.id}:${index}` })),
+      queries.flatMap((params, index) => {
+        const query = searchText(params.query)
+        return params.query && !query ? [] : [{ provider, params: { ...params, query }, key: `${provider.id}:${index}` }]
+      }),
     )
     const pending = jobs.filter((job) => !exhausted.includes(job.key))
 
