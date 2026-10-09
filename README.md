@@ -150,6 +150,12 @@ Husky runs these:
   no author search at all. For those two, the server looks through their latest articles (10 per
   page for NYT, 100 for NewsAPI) and keeps the ones whose byline matches, so an author who hasn't
   published recently won't show up. The feed then says so and offers the latest news.
+- The search text is cleaned once on the server before any source sees it. The Guardian rejects a
+  lone quote, a colon or square brackets, so those are dropped. Paired quotes still work for an
+  exact phrase.
+- NewsAPI keyword searches use its `everything` endpoint. Its `top-headlines` endpoint only holds
+  today's US headlines and finds almost nothing for a keyword. Browsing without a keyword still
+  uses top-headlines.
 - NewsAPI's free plan only returns the first 100 results and delays them. It also allows only 100
   requests a day, so after a lot of use it answers "rate limit reached". The app shows that as a
   notice and keeps going with the other sources. The cache (5 minutes) is what keeps normal use well
